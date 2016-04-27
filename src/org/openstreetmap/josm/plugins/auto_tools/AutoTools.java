@@ -17,7 +17,7 @@ public class AutoTools extends Plugin {
                 "Auto Tools", tr("Auto Tools"), KeyEvent.VK_K,
                 Main.main.menu.getDefaultMenuPos(), HelpUtil.ht("/Plugin/task")
         );
-        loadTaskMenu.add(new JMenuItem(new MergeBuildingsAction("Merge two Buildings")));
+        loadTaskMenu.add(new JMenuItem(new MergeBuildingsAction()));
         loadTaskMenu.add(new JSeparator());
         
     }

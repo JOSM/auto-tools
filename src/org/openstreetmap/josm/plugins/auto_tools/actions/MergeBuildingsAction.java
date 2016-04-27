@@ -1,6 +1,7 @@
 package org.openstreetmap.josm.plugins.auto_tools.actions;
 
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -21,6 +22,7 @@ import org.openstreetmap.josm.data.osm.TagCollection;
 import org.openstreetmap.josm.data.osm.Way;
 import static org.openstreetmap.josm.gui.mappaint.mapcss.ExpressionFactory.Functions.tr;
 import static org.openstreetmap.josm.tools.I18n.trn;
+import org.openstreetmap.josm.tools.Shortcut;
 
 /**
  *
@@ -28,8 +30,9 @@ import static org.openstreetmap.josm.tools.I18n.trn;
  */
 public class MergeBuildingsAction extends JosmAction {
 
-    public MergeBuildingsAction(String name) {
-        super(name, null, name, null, true);
+    public MergeBuildingsAction() {
+        super(tr("Combine LA buildings"), null, tr("Combine LA import buildings"),
+                Shortcut.registerShortcut("AutoTools:CLAbuildings", tr("AutoTools:CLAbuildings"), KeyEvent.VK_M, Shortcut.ALT_CTRL), true);
     }
 
     @Override
