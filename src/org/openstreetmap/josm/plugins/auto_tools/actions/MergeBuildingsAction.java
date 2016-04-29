@@ -5,6 +5,7 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -16,7 +17,12 @@ import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.command.ChangePropertyCommand;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.SequenceCommand;
+import org.openstreetmap.josm.data.coor.LatLon;
+import org.openstreetmap.josm.data.osm.Hash;
+import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
+import org.openstreetmap.josm.data.osm.PrimitiveData;
+import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.Tag;
 import org.openstreetmap.josm.data.osm.TagCollection;
 import org.openstreetmap.josm.data.osm.Way;
@@ -38,11 +44,14 @@ public class MergeBuildingsAction extends JosmAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         LinkedList<Way> ways = new LinkedList<Way>(Main.main.getCurrentDataSet().getSelectedWays());
-        if (ways.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "Vacio");
+        if (ways.isEmpty() || ways.size() == 1 ) {
+
+            JOptionPane.showMessageDialog(null, "Select at least two ways");
         } else {
             //Filtrar los Tags, y sacar un promeriod de ellos
-            Map<String, String> atrributes = new HashMap();
+            Map<String, String> atrributes = new Hashtable<String, String>();
+            double area = findArea((Way) ways.get(0));
+            atrributes.put("building", ways.get(0).get("building"));
             for (OsmPrimitive osm : ways) {
                 Set<String> keys = osm.getKeys().keySet();
                 for (String key : keys) {
@@ -54,6 +63,11 @@ public class MergeBuildingsAction extends JosmAction {
                             atrributes.put(key, atrr);
                         }
                     }
+                }
+                double newArea = findArea((Way) osm);
+                if (newArea > area) {
+                    area = newArea;
+                    atrributes.put("building", osm.get("building"));
                 }
             }
             //Convertir  a tag collections
@@ -106,5 +120,43 @@ public class MergeBuildingsAction extends JosmAction {
             );
         }
         return null;
+    }
+
+    protected Double findArea(Way w) {
+        double length = 0.0;
+        Node lastN = null;
+        double wayArea = 0.0;
+        Double firstSegLength = null;
+        boolean isCircle = true;
+        for (Node n : w.getNodes()) {
+            if (lastN != null && lastN.getCoor() != null && n.getCoor() != null) {
+                final double segLength = lastN.getCoor().greatCircleDistance(n.getCoor());
+                if (firstSegLength == null) {
+                    firstSegLength = segLength;
+                }
+                if (isCircle && Math.abs(firstSegLength - segLength) > 0.000001) {
+                    isCircle = false;
+                }
+                length += segLength;
+                wayArea += (calcX(n.getCoor()) * calcY(lastN.getCoor()))
+                        - (calcY(n.getCoor()) * calcX(lastN.getCoor()));
+            }
+            lastN = n;
+        }
+
+        if (lastN != null && lastN == w.getNodes().iterator().next()) {
+            wayArea = Math.abs(wayArea / 2);
+        } else {
+            wayArea = 0;
+        }
+        return wayArea;
+    }
+
+    public static double calcX(LatLon p1) {
+        return p1.lat() * Math.PI * 6367000 / 180;
+    }
+
+    public static double calcY(LatLon p1) {
+        return p1.lon() * (Math.PI * 6367000 / 180) * Math.cos(p1.lat() * Math.PI / 180);
     }
 }
