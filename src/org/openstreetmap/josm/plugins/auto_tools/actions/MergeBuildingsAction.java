@@ -4,7 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
@@ -18,11 +18,8 @@ import org.openstreetmap.josm.command.ChangePropertyCommand;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.SequenceCommand;
 import org.openstreetmap.josm.data.coor.LatLon;
-import org.openstreetmap.josm.data.osm.Hash;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
-import org.openstreetmap.josm.data.osm.PrimitiveData;
-import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.Tag;
 import org.openstreetmap.josm.data.osm.TagCollection;
 import org.openstreetmap.josm.data.osm.Way;
@@ -44,14 +41,14 @@ public class MergeBuildingsAction extends JosmAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         LinkedList<Way> ways = new LinkedList<Way>(Main.main.getCurrentDataSet().getSelectedWays());
-        if (ways.isEmpty() || ways.size() == 1 ) {
+        if (ways.isEmpty() || ways.size() == 1) {
 
             JOptionPane.showMessageDialog(null, "Select at least two ways");
         } else {
-            //Filtrar los Tags, y sacar un promeriod de ellos
+            //Filtrar los Tags, y sacar un promerio de ellos
             Map<String, String> atrributes = new Hashtable<String, String>();
-            double area = findArea((Way) ways.get(0));
-            atrributes.put("building", ways.get(0).get("building"));
+            List<Double> areaList = new ArrayList<>();
+            List<String> bvList = new ArrayList<>();
             for (OsmPrimitive osm : ways) {
                 Set<String> keys = osm.getKeys().keySet();
                 for (String key : keys) {
@@ -64,12 +61,10 @@ public class MergeBuildingsAction extends JosmAction {
                         }
                     }
                 }
-                double newArea = findArea((Way) osm);
-                if (newArea > area) {
-                    area = newArea;
-                    atrributes.put("building", osm.get("building"));
-                }
+                areaList.add(findArea((Way) osm));
+                bvList.add(osm.get("building"));
             }
+            atrributes.put("building", bvList.get(areaList.indexOf(Collections.max(areaList))));
             //Convertir  a tag collections
             TagCollection tagCollection = new TagCollection();
             for (Map.Entry<String, String> entry : atrributes.entrySet()) {
