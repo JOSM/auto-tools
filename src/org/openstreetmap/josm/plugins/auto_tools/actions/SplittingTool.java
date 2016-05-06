@@ -1,6 +1,7 @@
 package org.openstreetmap.josm.plugins.auto_tools.actions;
 
 import java.awt.Point;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -57,6 +58,7 @@ public class SplittingTool extends MapMode {
         super(tr("SplittingTool"), "node/autonode", tr("Draw nodes"),
                 Shortcut.registerShortcut("mapmode:SplittingTool", tr("Mode:SplittingTool", tr("Draw")), KeyEvent.VK_T, Shortcut.DIRECT),
                 mapFrame, ImageProvider.getCursor("crosshair", null));
+
     }
 
     @Override
@@ -67,16 +69,19 @@ public class SplittingTool extends MapMode {
         super.enterMode();
         toleranceMultiplier = 0.01 * NavigatableComponent.PROP_SNAP_DISTANCE.get();
         Main.map.mapView.addMouseListener(this);
+
     }
 
     @Override
     public void exitMode() {
         super.exitMode();
         Main.map.mapView.removeMouseListener(this);
+
     }
 
     @Override
-    public void mouseReleased(MouseEvent e) {
+    public void mouseReleased(MouseEvent e) {        
+        
         if (e.getButton() == MouseEvent.BUTTON3 || e.getButton() != MouseEvent.BUTTON1 || !Main.map.mapView.isActiveLayerDrawable()) {
             return;
         }
@@ -350,7 +355,7 @@ public class SplittingTool extends MapMode {
             Main.main.undoRedo.add(result.getCommand());
             //getCurrentDataSet().setSelected(result.getNewSelection());
         }
-
+        Main.map.selectMapMode(Main.map.mapModeSelect);
     }
 
     private List<Way> getApplicableWays(List<Way> selectedWays, List<Node> selectedNodes) {
