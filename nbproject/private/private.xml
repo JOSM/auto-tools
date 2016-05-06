@@ -3,8 +3,9 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/home/ruben/apps/josm/plugins/auto_tools/src/org/openstreetmap/josm/plugins/auto_tools/actions/MergeBuildingsAction.java</file>
-            <file>file:/home/ruben/apps/josm/plugins/auto_tools/src/org/openstreetmap/josm/plugins/auto_tools/AutoTools.java</file>
+            <file>file:/home/samely/Plugins/josm/plugins/auto-tools/src/org/openstreetmap/josm/plugins/auto_tools/actions/MergeBuildingsAction.java</file>
+            <file>file:/home/samely/Plugins/josm/plugins/auto-tools/src/org/openstreetmap/josm/plugins/auto_tools/actions/DrawAction.java</file>
+            <file>file:/home/samely/Plugins/josm/plugins/auto-tools/src/org/openstreetmap/josm/plugins/auto_tools/actions/SplittingAction.java</file>
         </group>
     </open-files>
 </project-private>
