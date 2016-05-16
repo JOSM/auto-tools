@@ -1,9 +1,7 @@
 package org.openstreetmap.josm.plugins.auto_tools.actions;
 
 import java.awt.Point;
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,14 +13,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.swing.Action;
 import javax.swing.JOptionPane;
 import org.openstreetmap.josm.Main;
 import org.openstreetmap.josm.actions.SplitWayAction;
 import static org.openstreetmap.josm.actions.SplitWayAction.buildSplitChunks;
 import static org.openstreetmap.josm.actions.SplitWayAction.splitWay;
 import org.openstreetmap.josm.actions.mapmode.MapMode;
-import org.openstreetmap.josm.actions.mapmode.SelectAction;
 import org.openstreetmap.josm.command.AddCommand;
 import org.openstreetmap.josm.command.ChangeCommand;
 import org.openstreetmap.josm.command.Command;
@@ -80,8 +76,8 @@ public class SplittingTool extends MapMode {
     }
 
     @Override
-    public void mouseReleased(MouseEvent e) {        
-        
+    public void mouseReleased(MouseEvent e) {
+
         if (e.getButton() == MouseEvent.BUTTON3 || e.getButton() != MouseEvent.BUTTON1 || !Main.map.mapView.isActiveLayerDrawable()) {
             return;
         }
@@ -106,6 +102,7 @@ public class SplittingTool extends MapMode {
             selection.add(n);
             if (!selection.isEmpty()) {
                 SplitRoad(n);
+               // getCurrentDataSet().setSelected(selectableWay(n));
                 return;
             }
         } else {
@@ -163,10 +160,20 @@ public class SplittingTool extends MapMode {
         }
 
         newSelection.clear();
-        getCurrentDataSet().setSelected(newSelection);
         //return to select mode
         Main.map.selectMapMode(Main.map.mapModeSelect);
 
+    }
+
+    public static Way selectableWay(Node n) {
+        List<Way> selectWays = OsmPrimitive.getFilteredList(n.getReferrers(), Way.class);
+        Way sw = selectWays.get(0);
+        for (Way selected : selectWays) {
+            if (selected.getLongestSegmentLength() < sw.getLongestSegmentLength()) {
+                sw = selected;
+            }
+        }
+        return sw;
     }
 
     public static Way getWayForNodeToSplit(Node n) {
@@ -353,8 +360,10 @@ public class SplittingTool extends MapMode {
             sel.addAll(selectedRelations);
             SplitWayAction.SplitWayResult result = splitWay(getEditLayer(), selectedWay, wayChunks, sel);
             Main.main.undoRedo.add(result.getCommand());
+            //select what were splitted
             //getCurrentDataSet().setSelected(result.getNewSelection());
         }
+        getCurrentDataSet().setSelected(selectableWay(node));
         Main.map.selectMapMode(Main.map.mapModeSelect);
     }
 
