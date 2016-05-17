@@ -1,9 +1,11 @@
 package org.openstreetmap.josm.plugins.auto_tools.actions;
 
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
 import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,6 +18,7 @@ import java.util.Set;
 import javax.swing.JOptionPane;
 import org.openstreetmap.josm.Main;
 import org.openstreetmap.josm.actions.SplitWayAction;
+import org.openstreetmap.josm.actions.SplitWayAction.SplitWayResult;
 import static org.openstreetmap.josm.actions.SplitWayAction.buildSplitChunks;
 import static org.openstreetmap.josm.actions.SplitWayAction.splitWay;
 import org.openstreetmap.josm.actions.mapmode.MapMode;
@@ -28,11 +31,15 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Relation;
+import org.openstreetmap.josm.data.osm.RelationMember;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.osm.WaySegment;
+import org.openstreetmap.josm.gui.DefaultNameFormatter;
 import org.openstreetmap.josm.gui.MapFrame;
 import org.openstreetmap.josm.gui.NavigatableComponent;
 import org.openstreetmap.josm.gui.Notification;
+import org.openstreetmap.josm.gui.layer.OsmDataLayer;
+import org.openstreetmap.josm.tools.CheckParameterUtil;
 import static org.openstreetmap.josm.tools.I18n.tr;
 import static org.openstreetmap.josm.tools.I18n.trn;
 import org.openstreetmap.josm.tools.ImageProvider;
@@ -102,7 +109,7 @@ public class SplittingTool extends MapMode {
             selection.add(n);
             if (!selection.isEmpty()) {
                 SplitRoad(n);
-               // getCurrentDataSet().setSelected(selectableWay(n));
+                // getCurrentDataSet().setSelected(selectableWay(n));
                 return;
             }
         } else {
@@ -163,17 +170,6 @@ public class SplittingTool extends MapMode {
         //return to select mode
         Main.map.selectMapMode(Main.map.mapModeSelect);
 
-    }
-
-    public static Way selectableWay(Node n) {
-        List<Way> selectWays = OsmPrimitive.getFilteredList(n.getReferrers(), Way.class);
-        Way sw = selectWays.get(0);
-        for (Way selected : selectWays) {
-            if (selected.getLongestSegmentLength() < sw.getLongestSegmentLength()) {
-                sw = selected;
-            }
-        }
-        return sw;
     }
 
     public static Way getWayForNodeToSplit(Node n) {
@@ -358,12 +354,27 @@ public class SplittingTool extends MapMode {
             List<OsmPrimitive> sel = new ArrayList<OsmPrimitive>(selectedWays.size() + selectedRelations.size());
             sel.addAll(selectedWays);
             sel.addAll(selectedRelations);
-            SplitWayAction.SplitWayResult result = splitWay(getEditLayer(), selectedWay, wayChunks, sel);
+            SplitWayResult result = splitWay(getEditLayer(), selectedWay, wayChunks, sel);
             Main.main.undoRedo.add(result.getCommand());
-            //select what were splitted
-            //getCurrentDataSet().setSelected(result.getNewSelection());
+
+            //Select the way to tag
+            Way way2 = result.getNewWays().get(0);
+            try {
+                if (selectedWay.firstNode().equals(way2.firstNode())) {
+                    selectTheWay(selectedWay, way2, selectedWay.lastNode(), way2.lastNode());
+                } else if (selectedWay.firstNode().equals(way2.lastNode())) {
+                    selectTheWay(selectedWay, way2, selectedWay.lastNode(), way2.firstNode());
+                } else if (selectedWay.lastNode().equals(way2.firstNode())) {
+                    selectTheWay(selectedWay, way2, selectedWay.firstNode(), way2.lastNode());
+                } else if (selectedWay.lastNode().equals(way2.lastNode())) {
+                    selectTheWay(selectedWay, way2, selectedWay.firstNode(), way2.firstNode());
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
-        getCurrentDataSet().setSelected(selectableWay(node));
+
         Main.map.selectMapMode(Main.map.mapModeSelect);
     }
 
@@ -379,6 +390,7 @@ public class SplittingTool extends MapMode {
             Way inTheMiddle = null;
             boolean foundSelected = false;
             for (Way w : referedWays) {
+
                 if (selectedWays.contains(w)) {
                     foundSelected = true;
                 }
@@ -425,6 +437,31 @@ public class SplittingTool extends MapMode {
             }
             return result;
         }
+    }
+
+    public static void selectTheWay(Way way, Way way2, Node n1, Node n2) {
+
+        int ws1 = OsmPrimitive.getFilteredList(n1.getReferrers(), Way.class).size();
+        int ws2 = OsmPrimitive.getFilteredList(n2.getReferrers(), Way.class).size();
+
+        System.out.println("Esto es nodo de 1 " + ws1 + "y esto es de 2" + ws2);
+        System.out.println("way1 ID" + way.getId() + "Way2 ID" + way2.getId());
+        try {
+            if (ws1 > 2 && ws2 > 2 || ws1 <= 2 && ws2 <= 2) {
+                if (way.getLength() > way2.getLength()) {
+                    getCurrentDataSet().setSelected(way2);
+                } else {
+                    getCurrentDataSet().setSelected(way);
+                }
+            } else if (ws1 > 2 && ws2 <= 2) {
+                getCurrentDataSet().setSelected(way);
+            } else if (ws1 <= 2 && ws2 > 2) {
+                getCurrentDataSet().setSelected(way2);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
 }
