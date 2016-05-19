@@ -1,11 +1,9 @@
 package org.openstreetmap.josm.plugins.auto_tools.actions;
 
-import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
 import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -17,7 +15,6 @@ import java.util.Map;
 import java.util.Set;
 import javax.swing.JOptionPane;
 import org.openstreetmap.josm.Main;
-import org.openstreetmap.josm.actions.SplitWayAction;
 import org.openstreetmap.josm.actions.SplitWayAction.SplitWayResult;
 import static org.openstreetmap.josm.actions.SplitWayAction.buildSplitChunks;
 import static org.openstreetmap.josm.actions.SplitWayAction.splitWay;
@@ -31,15 +28,11 @@ import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Relation;
-import org.openstreetmap.josm.data.osm.RelationMember;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.osm.WaySegment;
-import org.openstreetmap.josm.gui.DefaultNameFormatter;
 import org.openstreetmap.josm.gui.MapFrame;
 import org.openstreetmap.josm.gui.NavigatableComponent;
 import org.openstreetmap.josm.gui.Notification;
-import org.openstreetmap.josm.gui.layer.OsmDataLayer;
-import org.openstreetmap.josm.tools.CheckParameterUtil;
 import static org.openstreetmap.josm.tools.I18n.tr;
 import static org.openstreetmap.josm.tools.I18n.trn;
 import org.openstreetmap.josm.tools.ImageProvider;
@@ -97,7 +90,11 @@ public class SplittingTool extends MapMode {
         mousePos = e.getPoint();
 
         DataSet ds = getCurrentDataSet();
-        Collection<OsmPrimitive> selection = new ArrayList<>(ds.getSelected());
+        Collection<Command> cmds = new LinkedList<>();
+        Collection<OsmPrimitive> newSelection = new LinkedList<>(ds.getSelected());
+
+        List<Way> reuseWays = new ArrayList<>();
+        List<Way> replacedWays = new ArrayList<>();
 
         boolean newNode = false;
         Node n = null;
@@ -105,37 +102,29 @@ public class SplittingTool extends MapMode {
         n = Main.map.mapView.getNearestNode(mousePos, OsmPrimitive.isSelectablePredicate);
 
         if (n != null) {
-            // user clicked on node
-            selection.add(n);
-            if (!selection.isEmpty()) {
-                SplitRoad(n);
-                // getCurrentDataSet().setSelected(selectableWay(n));
+            // user clicked on node          
+            if (!newSelection.isEmpty()) {
+                SplitRoad(n, ds, newSelection);
                 return;
             }
         } else {
             if (n != null) {
-
-                EastNorth foundPoint = n.getEastNorth();
-                // project found node to snapping line
                 // do not add new node if there is some node within snapping distance
+                EastNorth foundPoint = n.getEastNorth();
                 double tolerance = Main.map.mapView.getDist100Pixel() * toleranceMultiplier;
                 if (foundPoint.distance(foundPoint) > tolerance) {
-                    n = new Node(foundPoint); // point != projected, so we create new node
+                    n = new Node(foundPoint);
                     newNode = true;
                 }
 
-            } else { // n==null, no node found in clicked area
+            } else {
+                // n==null, no node found in clicked area                
                 EastNorth mouseEN = Main.map.mapView.getEastNorth(e.getX(), e.getY());
-                n = new Node(mouseEN); //create node at clicked point                
+                n = new Node(mouseEN);
                 newNode = true;
             }
         }
-
-        Collection<Command> cmds = new LinkedList<>();
-        Collection<OsmPrimitive> newSelection = new LinkedList<>(ds.getSelected());
-        List<Way> reuseWays = new ArrayList<>();
-        List<Way> replacedWays = new ArrayList<>();
-
+        //Create new node
         if (newNode) {
             if (n.getCoor().isOutSideWorld()) {
                 JOptionPane.showMessageDialog(
@@ -146,41 +135,25 @@ public class SplittingTool extends MapMode {
                 );
                 return;
             }
-
             cmds.add(new AddCommand(n));
 
-            //This is the part that insert the node into the way
-            if (!ctrl) {
-                // Insert the node into all the nearby way segments
-                List<WaySegment> wss = Main.map.mapView.getNearestWaySegments(Main.map.mapView.getPoint(n), OsmPrimitive.isSelectablePredicate);
-                insertNodeIntoAllNearbySegments(wss, n, newSelection, cmds, replacedWays, reuseWays);
-            }
+            // Insert the node into all the nearby way segments
+            List<WaySegment> wss = Main.map.mapView.getNearestWaySegments(Main.map.mapView.getPoint(n), OsmPrimitive.isSelectablePredicate);
+            insertNodeIntoAllNearbySegments(wss, n, newSelection, cmds, replacedWays, reuseWays);
         }
 
         Command c = new SequenceCommand("Add node into way and connect", cmds);
         Main.main.undoRedo.add(c);
 
+        //Delete the created node if not in a way
         if (OsmPrimitive.getFilteredList(n.getReferrers(), Way.class).isEmpty()) {
             getCurrentDataSet().removePrimitive(n.getPrimitiveId());
         } else {
-            SplitRoad(n);
+            SplitRoad(n, ds, newSelection);
         }
 
-        newSelection.clear();
         //return to select mode
         Main.map.selectMapMode(Main.map.mapModeSelect);
-
-    }
-
-    public static Way getWayForNodeToSplit(Node n) {
-        Way way = null;
-        for (Way w : Utils.filteredCollection(n.getReferrers(), Way.class)) {
-            if (!w.isUsable() || w.getNodesCount() < 1) {
-                continue;
-            }
-            way = w;
-        }
-        return way;
     }
 
     private void insertNodeIntoAllNearbySegments(List<WaySegment> wss, Node n, Collection<OsmPrimitive> newSelection,
@@ -288,16 +261,26 @@ public class SplittingTool extends MapMode {
         Collections.reverse(is);
     }
 
-    public void SplitRoad(Node node) {
+    public void SplitRoad(Node node, DataSet ds, Collection<OsmPrimitive> newSelection) {
+        Collection<OsmPrimitive> selectionToSplit = new LinkedList<>(ds.getSelected());
+        newSelection.add(node);
 
-        DataSet ds = getCurrentDataSet();
-        Collection<OsmPrimitive> selection = new ArrayList<>(ds.getSelected());
-        selection.add(node);
-        selection.add(getWayForNodeToSplit(node));
+        //get way to split
+        Way way = null;
 
-        List<Node> selectedNodes = OsmPrimitive.getFilteredList(selection, Node.class);
-        List<Way> selectedWays = OsmPrimitive.getFilteredList(selection, Way.class);
-        List<Relation> selectedRelations = OsmPrimitive.getFilteredList(selection, Relation.class);
+        for (Way w : Utils.filteredCollection(node.getReferrers(), Way.class)) {
+            if (!w.isUsable() || w.getNodesCount() < 1) {
+                continue;
+            }
+            way = w;
+        }
+
+        newSelection.add(way);
+
+        List<Node> selectedNodes = OsmPrimitive.getFilteredList(newSelection, Node.class);
+        List<Way> selectedWays = OsmPrimitive.getFilteredList(newSelection, Way.class);
+        List<Relation> selectedRelations = OsmPrimitive.getFilteredList(newSelection, Relation.class);
+
         List<Way> applicableWays = getApplicableWays(selectedWays, selectedNodes);
 
         if (applicableWays == null) {
@@ -342,12 +325,16 @@ public class SplittingTool extends MapMode {
                             "There is more than one way using the nodes you selected. Please select the way also.",
                             selectedNodes.size()))
                     .setIcon(JOptionPane.WARNING_MESSAGE)
-                    .show();
-            return;
+                    .show();            
         }
 
+        Way selectedWay = null;
         // Finally, applicableWays contains only one perfect way
-        Way selectedWay = applicableWays.get(0);
+        if (selectionToSplit != null && selectionToSplit.size() == 1 && applicableWays.contains(OsmPrimitive.getFilteredList(newSelection, Way.class).get(0))) {
+            selectedWay = OsmPrimitive.getFilteredList(newSelection, Way.class).get(0);
+        } else {
+            selectedWay = applicableWays.get(0);
+        }
 
         List<List<Node>> wayChunks = buildSplitChunks(selectedWay, selectedNodes);
         if (wayChunks != null) {
@@ -444,8 +431,6 @@ public class SplittingTool extends MapMode {
         int ws1 = OsmPrimitive.getFilteredList(n1.getReferrers(), Way.class).size();
         int ws2 = OsmPrimitive.getFilteredList(n2.getReferrers(), Way.class).size();
 
-        System.out.println("Esto es nodo de 1 " + ws1 + "y esto es de 2" + ws2);
-        System.out.println("way1 ID" + way.getId() + "Way2 ID" + way2.getId());
         try {
             if (ws1 > 2 && ws2 > 2 || ws1 <= 2 && ws2 <= 2) {
                 if (way.getLength() > way2.getLength()) {
