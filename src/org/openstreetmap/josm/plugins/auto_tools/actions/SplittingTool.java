@@ -105,6 +105,7 @@ public class SplittingTool extends MapMode {
             // user clicked on node          
             if (!newSelection.isEmpty()) {
                 SplitRoad(n, ds, newSelection);
+                Main.map.selectMapMode(Main.map.mapModeSelect);
                 return;
             }
         } else {
@@ -148,12 +149,11 @@ public class SplittingTool extends MapMode {
         //Delete the created node if not in a way
         if (OsmPrimitive.getFilteredList(n.getReferrers(), Way.class).isEmpty()) {
             getCurrentDataSet().removePrimitive(n.getPrimitiveId());
+
         } else {
             SplitRoad(n, ds, newSelection);
+            Main.map.selectMapMode(Main.map.mapModeSelect);
         }
-
-        //return to select mode
-        Main.map.selectMapMode(Main.map.mapModeSelect);
     }
 
     private void insertNodeIntoAllNearbySegments(List<WaySegment> wss, Node n, Collection<OsmPrimitive> newSelection,
@@ -319,19 +319,12 @@ public class SplittingTool extends MapMode {
                     .setIcon(JOptionPane.WARNING_MESSAGE)
                     .show();
             return;
-        } else if (applicableWays.size() > 1) {
-            new Notification(
-                    trn("There is more than one way using the node you selected. Please select the way also.",
-                            "There is more than one way using the nodes you selected. Please select the way also.",
-                            selectedNodes.size()))
-                    .setIcon(JOptionPane.WARNING_MESSAGE)
-                    .show();            
         }
-
         Way selectedWay = null;
+
         // Finally, applicableWays contains only one perfect way
-        if (selectionToSplit != null && selectionToSplit.size() == 1 && applicableWays.contains(OsmPrimitive.getFilteredList(newSelection, Way.class).get(0))) {
-            selectedWay = OsmPrimitive.getFilteredList(newSelection, Way.class).get(0);
+        if (selectionToSplit != null && selectionToSplit.size() == 1 && applicableWays.contains(OsmPrimitive.getFilteredList(selectionToSplit, Way.class).get(0))) {
+            selectedWay = OsmPrimitive.getFilteredList(selectionToSplit, Way.class).get(0);
         } else {
             selectedWay = applicableWays.get(0);
         }
