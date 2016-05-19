@@ -341,13 +341,13 @@ public class SplittingTool extends MapMode {
             Way way2 = result.getNewWays().get(0);
             try {
                 if (selectedWay.firstNode().equals(way2.firstNode())) {
-                    selectTheWay(selectedWay, way2, selectedWay.lastNode(), way2.lastNode());
+                    selectTheWay(selectedWay, way2, selectedWay.lastNode(), way2.lastNode(),selectedWay.firstNode());
                 } else if (selectedWay.firstNode().equals(way2.lastNode())) {
-                    selectTheWay(selectedWay, way2, selectedWay.lastNode(), way2.firstNode());
+                    selectTheWay(selectedWay, way2, selectedWay.lastNode(), way2.firstNode(),selectedWay.firstNode());
                 } else if (selectedWay.lastNode().equals(way2.firstNode())) {
-                    selectTheWay(selectedWay, way2, selectedWay.firstNode(), way2.lastNode());
+                    selectTheWay(selectedWay, way2, selectedWay.firstNode(), way2.lastNode(),selectedWay.lastNode());
                 } else if (selectedWay.lastNode().equals(way2.lastNode())) {
-                    selectTheWay(selectedWay, way2, selectedWay.firstNode(), way2.firstNode());
+                    selectTheWay(selectedWay, way2, selectedWay.firstNode(), way2.firstNode(),selectedWay.lastNode());
                 }
 
             } catch (Exception e) {
@@ -419,10 +419,11 @@ public class SplittingTool extends MapMode {
         }
     }
 
-    public static void selectTheWay(Way way, Way way2, Node n1, Node n2) {
+    public static void selectTheWay(Way way, Way way2, Node n1, Node n2, Node common) {
 
         int ws1 = OsmPrimitive.getFilteredList(n1.getReferrers(), Way.class).size();
         int ws2 = OsmPrimitive.getFilteredList(n2.getReferrers(), Way.class).size();
+        int wsc = OsmPrimitive.getFilteredList(common.getReferrers(), Way.class).size();
 
         try {
             if (ws1 > 2 && ws2 > 2 || ws1 <= 2 && ws2 <= 2) {
@@ -432,9 +433,18 @@ public class SplittingTool extends MapMode {
                     getCurrentDataSet().setSelected(way);
                 }
             } else if (ws1 > 2 && ws2 <= 2) {
-                getCurrentDataSet().setSelected(way);
-            } else if (ws1 <= 2 && ws2 > 2) {
-                getCurrentDataSet().setSelected(way2);
+                if (wsc > 2) {
+                    getCurrentDataSet().setSelected(way2);
+                } else {
+                    getCurrentDataSet().setSelected(way);
+                }
+            } else if (ws1 <= 2 && ws2 > 2) { 
+                 if (wsc > 2) {
+                    getCurrentDataSet().setSelected(way);
+                } else {
+                   getCurrentDataSet().setSelected(way2);
+                }
+               
             }
         } catch (Exception e) {
             e.printStackTrace();
