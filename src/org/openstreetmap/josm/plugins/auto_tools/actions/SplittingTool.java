@@ -107,13 +107,11 @@ public class SplittingTool extends MapMode {
         }
 
         if (n != null) {
-            if (OsmPrimitive.getFilteredList(newSelection, Node.class).size() != 1) {
-                // user clicked on node          
-                if (!newSelection.isEmpty()) {
-                    SplitRoad(n, ds, newSelection);
-                    Main.map.selectMapMode(Main.map.mapModeSelect);
-                    return;
-                }
+            // user clicked on node          
+            if (!newSelection.isEmpty()) {
+                SplitRoad(n, ds, newSelection);
+                Main.map.selectMapMode(Main.map.mapModeSelect);
+                return;
             }
         } else {
             if (n != null) {
