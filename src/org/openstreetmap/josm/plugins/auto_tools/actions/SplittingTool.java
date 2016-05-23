@@ -101,12 +101,19 @@ public class SplittingTool extends MapMode {
 
         n = Main.map.mapView.getNearestNode(mousePos, OsmPrimitive.isSelectablePredicate);
 
+        if (OsmPrimitive.getFilteredList(newSelection, Node.class).size() == 1 && OsmPrimitive.getFilteredList(newSelection, Way.class).isEmpty()) {
+            newSelection.clear();
+            getCurrentDataSet().setSelected(newSelection);
+        }
+
         if (n != null) {
-            // user clicked on node          
-            if (!newSelection.isEmpty()) {
-                SplitRoad(n, ds, newSelection);
-                Main.map.selectMapMode(Main.map.mapModeSelect);
-                return;
+            if (OsmPrimitive.getFilteredList(newSelection, Node.class).size() != 1) {
+                // user clicked on node          
+                if (!newSelection.isEmpty()) {
+                    SplitRoad(n, ds, newSelection);
+                    Main.map.selectMapMode(Main.map.mapModeSelect);
+                    return;
+                }
             }
         } else {
             if (n != null) {
@@ -341,13 +348,13 @@ public class SplittingTool extends MapMode {
             Way way2 = result.getNewWays().get(0);
             try {
                 if (selectedWay.firstNode().equals(way2.firstNode())) {
-                    selectTheWay(selectedWay, way2, selectedWay.lastNode(), way2.lastNode(),selectedWay.firstNode());
+                    selectTheWay(selectedWay, way2, selectedWay.lastNode(), way2.lastNode(), selectedWay.firstNode());
                 } else if (selectedWay.firstNode().equals(way2.lastNode())) {
-                    selectTheWay(selectedWay, way2, selectedWay.lastNode(), way2.firstNode(),selectedWay.firstNode());
+                    selectTheWay(selectedWay, way2, selectedWay.lastNode(), way2.firstNode(), selectedWay.firstNode());
                 } else if (selectedWay.lastNode().equals(way2.firstNode())) {
-                    selectTheWay(selectedWay, way2, selectedWay.firstNode(), way2.lastNode(),selectedWay.lastNode());
+                    selectTheWay(selectedWay, way2, selectedWay.firstNode(), way2.lastNode(), selectedWay.lastNode());
                 } else if (selectedWay.lastNode().equals(way2.lastNode())) {
-                    selectTheWay(selectedWay, way2, selectedWay.firstNode(), way2.firstNode(),selectedWay.lastNode());
+                    selectTheWay(selectedWay, way2, selectedWay.firstNode(), way2.firstNode(), selectedWay.lastNode());
                 }
 
             } catch (Exception e) {
@@ -438,13 +445,13 @@ public class SplittingTool extends MapMode {
                 } else {
                     getCurrentDataSet().setSelected(way);
                 }
-            } else if (ws1 <= 2 && ws2 > 2) { 
-                 if (wsc > 2) {
+            } else if (ws1 <= 2 && ws2 > 2) {
+                if (wsc > 2) {
                     getCurrentDataSet().setSelected(way);
                 } else {
-                   getCurrentDataSet().setSelected(way2);
+                    getCurrentDataSet().setSelected(way2);
                 }
-               
+
             }
         } catch (Exception e) {
             e.printStackTrace();
