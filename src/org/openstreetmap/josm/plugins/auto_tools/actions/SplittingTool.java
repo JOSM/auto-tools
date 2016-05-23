@@ -51,10 +51,9 @@ public class SplittingTool extends MapMode {
     private static int snapToIntersectionThreshold;
 
     public SplittingTool(MapFrame mapFrame) {
-        super(tr("SplittingTool"), "node/autonode", tr("Draw nodes"),
-                Shortcut.registerShortcut("mapmode:SplittingTool", tr("Mode:SplittingTool", tr("Draw")), KeyEvent.VK_T, Shortcut.DIRECT),
+        super(tr("Knife tool"), "iconknife", tr("Split way."),
+                Shortcut.registerShortcut("mapmode:SplittingTool", tr("Mode:SplittingTool", tr("Split")), KeyEvent.VK_T, Shortcut.DIRECT),
                 mapFrame, ImageProvider.getCursor("crosshair", null));
-
     }
 
     @Override
@@ -77,7 +76,6 @@ public class SplittingTool extends MapMode {
 
     @Override
     public void mouseReleased(MouseEvent e) {
-
         if (e.getButton() == MouseEvent.BUTTON3 || e.getButton() != MouseEvent.BUTTON1 || !Main.map.mapView.isActiveLayerDrawable()) {
             return;
         }
@@ -172,7 +170,6 @@ public class SplittingTool extends MapMode {
                 is = new ArrayList<>();
                 insertPoints.put(ws.way, is);
             }
-
             is.add(ws.lowerIndex);
         }
 
@@ -194,12 +191,10 @@ public class SplittingTool extends MapMode {
             replacedWays.add(insertPoint.getKey());
             reuseWays.add(wnew);
         }
-
         adjustNode(segSet, n);
     }
 
     private static void adjustNode(Collection<Pair<Node, Node>> segs, Node n) {
-
         switch (segs.size()) {
             case 0:
                 return;
