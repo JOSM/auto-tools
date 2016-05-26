@@ -2,6 +2,7 @@ package org.openstreetmap.josm.plugins.auto_tools.actions;
 
 import java.awt.Point;
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,7 +35,6 @@ import org.openstreetmap.josm.gui.MapFrame;
 import org.openstreetmap.josm.gui.NavigatableComponent;
 import org.openstreetmap.josm.gui.Notification;
 import static org.openstreetmap.josm.tools.I18n.tr;
-import static org.openstreetmap.josm.tools.I18n.trn;
 import org.openstreetmap.josm.tools.ImageProvider;
 import org.openstreetmap.josm.tools.Pair;
 import org.openstreetmap.josm.tools.Shortcut;
@@ -49,6 +49,7 @@ public class SplittingTool extends MapMode {
     private Point mousePos;
     private double toleranceMultiplier;
     private static int snapToIntersectionThreshold;
+    int counter = 0;
 
     public SplittingTool(MapFrame mapFrame) {
         super(tr("Knife tool"), "iconknife", tr("Split way."),
@@ -82,6 +83,30 @@ public class SplittingTool extends MapMode {
 
         // Focus to enable shortcuts       
         Main.map.mapView.requestFocus();
+        Main.map.mapView.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == Main.map.mapMode.getShortcut().getAssignedKey()) {
+                    counter++;
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+                if (counter != 0) {
+                    Main.map.selectMapMode(Main.map.mapModeSelect);
+                    counter = 0;
+                }
+            }
+
+        });
+
+        System.out.println("Y esto es afuera " + counter);
 
         //Control key modifiers
         updateKeyModifiers(e);
@@ -105,7 +130,6 @@ public class SplittingTool extends MapMode {
         }
 
         if (n != null) {
-            // user clicked on node          
             if (!newSelection.isEmpty()) {
                 SplitRoad(n, ds, newSelection);
                 Main.map.selectMapMode(Main.map.mapModeSelect);
@@ -313,7 +337,7 @@ public class SplittingTool extends MapMode {
 
         if (applicableWays.isEmpty()) {
             new Notification(
-                    trn("The selected node is not in the middle of any way.",
+                    tr("The selected node is not in the middle of any way.",
                             "The selected nodes are not in the middle of any way.",
                             selectedNodes.size()))
                     .setIcon(JOptionPane.WARNING_MESSAGE)
@@ -355,7 +379,7 @@ public class SplittingTool extends MapMode {
             }
         }
 
-        Main.map.selectMapMode(Main.map.mapModeSelect);
+//        Main.map.selectMapMode(Main.map.mapModeSelect);
     }
 
     private List<Way> getApplicableWays(List<Way> selectedWays, List<Node> selectedNodes) {

@@ -26,9 +26,6 @@ auxiliary.show.customizer.message=<message>
                     <location>src</location>
                     <encoding>UTF-8</encoding>
                 </source-folder>
-                <build-file>
-                    <location>/home/ruben/josm/josm-tested.jar</location>
-                </build-file>
             </folders>
             <ide-actions>
                 <action name="build">
@@ -48,11 +45,6 @@ auxiliary.show.customizer.message=<message>
                     <target>compile</target>
                 </action>
             </ide-actions>
-            <export>
-                <type>jar</type>
-                <location>/home/ruben/josm/josm-tested.jar</location>
-                <build-target>compile</build-target>
-            </export>
             <view>
                 <items>
                     <source-folder style="packages">
@@ -76,8 +68,7 @@ auxiliary.show.customizer.message=<message>
         <java-data xmlns="http://www.netbeans.org/ns/freeform-project-java/3">
             <compilation-unit>
                 <package-root>src</package-root>
-                <classpath mode="compile">/home/ruben/apps/josm/core/dist/josm-custom.jar:/home/samely/Desktop/josm/josm-tested.jar</classpath>
-                <built-to>/home/ruben/josm/josm-tested.jar</built-to>
+                <classpath mode="compile">/home/samely/Desktop/josm/josm-tested.jar</classpath>
                 <source-level>1.7</source-level>
             </compilation-unit>
         </java-data>
