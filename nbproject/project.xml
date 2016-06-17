@@ -68,7 +68,7 @@ auxiliary.show.customizer.message=<message>
         <java-data xmlns="http://www.netbeans.org/ns/freeform-project-java/3">
             <compilation-unit>
                 <package-root>src</package-root>
-                <classpath mode="compile">/home/samely/Desktop/josm/josm-tested.jar</classpath>
+                <classpath mode="compile">/home/samely/plugin/josm/core/dist/josm-custom.jar:../../dist/utilsplugin2.jar</classpath>
                 <source-level>1.7</source-level>
             </compilation-unit>
         </java-data>
