@@ -300,11 +300,9 @@ public class ReplaceBuilding extends JosmAction {
 
         // merge tags
         try {
-            if (getTagConflictResolutionCommands(referenceWay, subjectWay) != null) {
-                commands.addAll(getTagConflictResolutionCommands(referenceWay, subjectWay));
-            } else {
-                return null;
-            }
+
+            commands.addAll(getTagConflictResolutionCommands(referenceWay, subjectWay));
+
         } catch (UserCancelException e) {
             // user canceled tag merge dialog
             return null;
