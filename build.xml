@@ -9,6 +9,10 @@
     <property name="plugin.link" value="https://github.com/mapbox/auto-tools"/>
     <property name="plugin.canloadatruntime" value="true"/>
     <property name="plugin.icon" value="images/wrench.png"/>
+    <property name="plugin.requires" value="utilsplugin2"/>
     <import file="../build-common.xml"/>
+    <fileset id="plugin.requires.jars" dir="${plugin.dist.dir}">
+        <include name="utilsplugin2.jar"/>        
+    </fileset>
 </project>
 
