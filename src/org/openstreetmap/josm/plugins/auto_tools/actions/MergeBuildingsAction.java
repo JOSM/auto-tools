@@ -20,10 +20,13 @@ import org.openstreetmap.josm.command.SequenceCommand;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
+import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.Tag;
 import org.openstreetmap.josm.data.osm.TagCollection;
 import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.gui.Notification;
 import static org.openstreetmap.josm.gui.mappaint.mapcss.ExpressionFactory.Functions.tr;
+import static org.openstreetmap.josm.tools.I18n.tr;
 import static org.openstreetmap.josm.tools.I18n.trn;
 import org.openstreetmap.josm.tools.Shortcut;
 
@@ -49,6 +52,20 @@ public class MergeBuildingsAction extends JosmAction {
             Map<String, String> atrributes = new Hashtable<String, String>();
             List<Double> areaList = new ArrayList<>();
             List<String> bvList = new ArrayList<>();
+            int flag = 0;
+            for (OsmPrimitive osm : ways) {
+                if (OsmPrimitive.getFilteredList(osm.getReferrers(), Relation.class).size() > 0) {
+                    flag++;
+                }
+            }
+            if (flag > 0) {
+                flag = 0;
+                new Notification(
+                        tr("Cannot merge multipolygon."))
+                        .setIcon(JOptionPane.WARNING_MESSAGE)
+                        .show();
+                return;
+            }
             for (OsmPrimitive osm : ways) {
                 Set<String> keys = osm.getKeys().keySet();
                 for (String key : keys) {
@@ -108,7 +125,7 @@ public class MergeBuildingsAction extends JosmAction {
         }
         if (!commands.isEmpty()) {
             String title1 = trn("Pasting {0} tag", "Pasting {0} tags", tc.getKeys().size(), tc.getKeys().size());
-            String title2 = trn("to {0} primitive", "to {0} primtives", selection.size(), selection.size());
+            String title2 = trn("to {0} primitive", "to {0} primitives", selection.size(), selection.size());
             return new SequenceCommand(
                     title1 + " " + title2,
                     commands
