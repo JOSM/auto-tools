@@ -20,10 +20,15 @@ import org.openstreetmap.josm.command.SequenceCommand;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
+import org.openstreetmap.josm.data.osm.OsmPrimitiveType;
+import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.Tag;
 import org.openstreetmap.josm.data.osm.TagCollection;
 import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.gui.Notification;
+import org.openstreetmap.josm.gui.conflict.tags.CombinePrimitiveResolverDialog;
 import static org.openstreetmap.josm.gui.mappaint.mapcss.ExpressionFactory.Functions.tr;
+import static org.openstreetmap.josm.tools.I18n.tr;
 import static org.openstreetmap.josm.tools.I18n.trn;
 import org.openstreetmap.josm.tools.Shortcut;
 
@@ -40,29 +45,53 @@ public class MergeBuildingsAction extends JosmAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        Relation rela = null;
+
         LinkedList<Way> ways = new LinkedList<Way>(Main.main.getCurrentDataSet().getSelectedWays());
         if (ways.isEmpty() || ways.size() == 1) {
-
             JOptionPane.showMessageDialog(null, "Select at least two ways");
         } else {
             //Filtrar los Tags, y sacar un promerio de ellos
             Map<String, String> atrributes = new Hashtable<String, String>();
             List<Double> areaList = new ArrayList<>();
             List<String> bvList = new ArrayList<>();
+            LinkedList<OsmPrimitive> sel = new LinkedList<>();
+
             for (OsmPrimitive osm : ways) {
-                Set<String> keys = osm.getKeys().keySet();
-                for (String key : keys) {
-                    if (!atrributes.containsKey(key)) {
-                        atrributes.put(key, osm.get(key));
-                    } else {
-                        if (!atrributes.get(key).equals(osm.get(key))) {
-                            String atrr = atrributes.get(key) + ";" + osm.get(key);
-                            atrributes.put(key, atrr);
+                if (OsmPrimitive.getFilteredList(osm.getReferrers(), Relation.class).size() > 0) {
+                    Relation relation = OsmPrimitive.getFilteredList(osm.getReferrers(), Relation.class).get(0);
+                    Set<String> keys = relation.getKeys().keySet();
+                    for (String key : keys) {
+                        if (!atrributes.containsKey(key)) {
+                            atrributes.put(key, relation.get(key));
+                        } else {
+                            if (!atrributes.get(key).equals(relation.get(key))) {
+                                String atrr = atrributes.get(key) + ";" + relation.get(key);
+                                atrributes.put(key, atrr);
+                            }
                         }
                     }
+
+                    areaList.add(findArea((Way) osm));
+                    bvList.add(relation.get("building"));
+                    rela = relation;
+                    sel.add(relation);
+                } else {
+                    Set<String> keys = osm.getKeys().keySet();
+
+                    for (String key : keys) {
+                        if (!atrributes.containsKey(key)) {
+                            atrributes.put(key, osm.get(key));
+                        } else {
+                            if (!atrributes.get(key).equals(osm.get(key))) {
+                                String atrr = atrributes.get(key) + ";" + osm.get(key);
+                                atrributes.put(key, atrr);
+                            }
+                        }
+                    }
+                    areaList.add(findArea((Way) osm));
+                    bvList.add(osm.get("building"));
                 }
-                areaList.add(findArea((Way) osm));
-                bvList.add(osm.get("building"));
             }
             atrributes.put("building", bvList.get(areaList.indexOf(Collections.max(areaList))));
             //Convertir  a tag collections
@@ -93,26 +122,47 @@ public class MergeBuildingsAction extends JosmAction {
                 }
                 tagCollection.add(tag);
             }
-            Main.main.undoRedo.add(new SequenceCommand(tr("revert tags"), MergeAllTags(ways, tagCollection)));
+            sel.addAll(ways);
+
+            Main.main.undoRedo.add(new SequenceCommand(tr("revert tags"), MergeAllTags(rela, sel, tagCollection)));
             JosmAction build = new JoinAreasAction();
             build.actionPerformed(e);
         }
     }
 
-    protected Command MergeAllTags(Collection<? extends OsmPrimitive> selection, TagCollection tc) {
+    protected Command MergeAllTags(Relation relation, Collection<? extends OsmPrimitive> selection, TagCollection tc) {
+        Collection<OsmPrimitive> selectiontemporal = new ArrayList<>();
+        Set<Way> selectionways = OsmPrimitive.getFilteredSet((List<OsmPrimitive>) selection, Way.class);
         List<Command> commands = new ArrayList<Command>();
+
+        if (relation != null) {
+            System.out.println("entra...");
+            for (OsmPrimitive op : selection) {
+                if (op.getType().equals(OsmPrimitiveType.RELATION)) {
+                    selectiontemporal.add(op);
+                    selection.removeAll(selection);
+                    selection = selectiontemporal;
+                }
+            }
+//            for (Way waysel : selectionways) {
+//                waysel.setKeys(new Hashtable<String, String>());
+//            }
+            for (String key : tc.getKeys()) {
+                String value = null;
+                commands.add(new ChangePropertyCommand(selectionways, key, value));
+            }
+        }
+
         for (String key : tc.getKeys()) {
             String value = tc.getValues(key).iterator().next();
             value = value.equals("") ? null : value;
             commands.add(new ChangePropertyCommand(selection, key, value));
         }
+
         if (!commands.isEmpty()) {
             String title1 = trn("Pasting {0} tag", "Pasting {0} tags", tc.getKeys().size(), tc.getKeys().size());
-            String title2 = trn("to {0} primitive", "to {0} primtives", selection.size(), selection.size());
-            return new SequenceCommand(
-                    title1 + " " + title2,
-                    commands
-            );
+            String title2 = trn("to {0} primitive", "to {0} primitives", selection.size(), selection.size());
+            return new SequenceCommand(title1 + " " + title2, commands);
         }
         return null;
     }
