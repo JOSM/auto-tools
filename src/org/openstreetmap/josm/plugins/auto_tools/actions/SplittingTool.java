@@ -110,7 +110,7 @@ public class SplittingTool extends MapMode {
         updateKeyModifiers(e);
         mousePos = e.getPoint();
 
-        DataSet ds = getCurrentDataSet();
+        DataSet ds = Main.getLayerManager().getEditDataSet();
         Collection<Command> cmds = new LinkedList<>();
         Collection<OsmPrimitive> newSelection = new LinkedList<>(ds.getSelected());
 
@@ -124,7 +124,7 @@ public class SplittingTool extends MapMode {
 
         if (OsmPrimitive.getFilteredList(newSelection, Node.class).size() == 1 && OsmPrimitive.getFilteredList(newSelection, Way.class).isEmpty()) {
             newSelection.clear();
-            getCurrentDataSet().setSelected(newSelection);
+            Main.getLayerManager().getEditDataSet().setSelected(newSelection);
         }
 
         if (n != null) {
@@ -173,7 +173,7 @@ public class SplittingTool extends MapMode {
 
         //Delete the created node if not in a way
         if (OsmPrimitive.getFilteredList(n.getReferrers(), Way.class).isEmpty()) {
-            getCurrentDataSet().removePrimitive(n.getPrimitiveId());
+            Main.getLayerManager().getEditDataSet().removePrimitive(n.getPrimitiveId());
 
         } else {
             SplitRoad(n, ds, newSelection);
@@ -356,7 +356,7 @@ public class SplittingTool extends MapMode {
             List<OsmPrimitive> sel = new ArrayList<OsmPrimitive>(selectedWays.size() + selectedRelations.size());
             sel.addAll(selectedWays);
             sel.addAll(selectedRelations);
-            SplitWayResult result = splitWay(getEditLayer(), selectedWay, wayChunks, sel);
+            SplitWayResult result = splitWay(Main.getLayerManager().getEditLayer(), selectedWay, wayChunks, sel);
             Main.main.undoRedo.add(result.getCommand());
 
             //Select the way to tag
@@ -448,23 +448,23 @@ public class SplittingTool extends MapMode {
         int wsc = OsmPrimitive.getFilteredList(common.getReferrers(), Way.class).size();
 
         try {
-            if (ws1 > 2 && ws2 > 2 || ws1 <= 2 && ws2 <= 2) {
+            if ((ws1 > 2 && ws2 > 2) || (ws1 <= 2 && ws2 <= 2)) {
                 if (way.getLength() > way2.getLength()) {
-                    getCurrentDataSet().setSelected(way2);
+                    Main.getLayerManager().getEditDataSet().setSelected(way2);
                 } else {
-                    getCurrentDataSet().setSelected(way);
+                    Main.getLayerManager().getEditDataSet().setSelected(way);
                 }
             } else if (ws1 > 2 && ws2 <= 2) {
                 if (wsc > 2) {
-                    getCurrentDataSet().setSelected(way2);
+                    Main.getLayerManager().getEditDataSet().setSelected(way2);
                 } else {
-                    getCurrentDataSet().setSelected(way);
+                    Main.getLayerManager().getEditDataSet().setSelected(way);
                 }
             } else if (ws1 <= 2 && ws2 > 2) {
                 if (wsc > 2) {
-                    getCurrentDataSet().setSelected(way);
+                    Main.getLayerManager().getEditDataSet().setSelected(way);
                 } else {
-                    getCurrentDataSet().setSelected(way2);
+                    Main.getLayerManager().getEditDataSet().setSelected(way2);
                 }
 
             }

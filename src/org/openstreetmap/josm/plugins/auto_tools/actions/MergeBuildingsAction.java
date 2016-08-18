@@ -47,7 +47,7 @@ public class MergeBuildingsAction extends JosmAction {
     public void actionPerformed(ActionEvent e) {
         Relation rela = null;
 
-        LinkedList<Way> ways = new LinkedList<Way>(Main.main.getCurrentDataSet().getSelectedWays());
+        LinkedList<Way> ways = new LinkedList<Way>(Main.getLayerManager().getEditDataSet().getSelectedWays());
         if (ways.isEmpty() || ways.size() == 1) {
             JOptionPane.showMessageDialog(null, "Select at least two ways");
         } else {

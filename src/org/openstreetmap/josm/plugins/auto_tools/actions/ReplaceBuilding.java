@@ -52,11 +52,11 @@ public class ReplaceBuilding extends JosmAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (getCurrentDataSet() == null) {
+        if (Main.getLayerManager().getEditDataSet() == null) {
             return;
         }
 
-        List<OsmPrimitive> selection = new ArrayList<>(getCurrentDataSet().getSelected());
+        List<OsmPrimitive> selection = new ArrayList<>(Main.getLayerManager().getEditDataSet().getSelected());
         if (selection.isEmpty()) {
             new Notification(tr("Select at least one building.")).setIcon(JOptionPane.WARNING_MESSAGE).show();
             return;
@@ -71,7 +71,7 @@ public class ReplaceBuilding extends JosmAction {
         Set<Way> newWays = new HashSet<>();
 
         if (selectedWays.size() == 1) {
-            newWays = addWaysIntersectingWaysRecursively(getCurrentDataSet().getWays(), selectedWays, newWays);
+            newWays = addWaysIntersectingWaysRecursively(Main.getLayerManager().getEditDataSet().getWays(), selectedWays, newWays);
             if (newWays.size() > 2) {
                 new Notification(tr("Select two buildings.")).setIcon(JOptionPane.WARNING_MESSAGE).show();
                 return;
@@ -247,7 +247,7 @@ public class ReplaceBuilding extends JosmAction {
             commands.add(new DeleteCommand(subjectNode));
         }
 
-        Main.main.getCurrentDataSet().setSelected(referenceObject);
+        Main.getLayerManager().getEditDataSet().setSelected(referenceObject);
 
         return new ReplaceGeometryCommand(
                 tr("Replace geometry for node {0}", subjectNode.getDisplayName(DefaultNameFormatter.getInstance())),
@@ -286,7 +286,7 @@ public class ReplaceBuilding extends JosmAction {
 
     public static ReplaceGeometryCommand buildReplaceWayCommand(Way subjectWay, Way referenceWay) {
 
-        Area a = Main.main.getCurrentDataSet().getDataSourceArea();
+        Area a = Main.getLayerManager().getEditDataSet().getDataSourceArea();
         if (!isInArea(subjectWay, a) || !isInArea(referenceWay, a)) {
             throw new ReplaceGeometryException(tr("The ways must be entirely within the downloaded area."));
         }
@@ -408,7 +408,7 @@ public class ReplaceBuilding extends JosmAction {
         }
 
         // Remove geometry way from selection
-        Main.main.getCurrentDataSet().clearSelection(referenceWay);
+        Main.getLayerManager().getEditDataSet().clearSelection(referenceWay);
 
         // And delete old geometry way
         commands.add(new DeleteCommand(referenceWay));
