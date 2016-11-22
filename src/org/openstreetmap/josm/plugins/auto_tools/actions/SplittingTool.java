@@ -37,6 +37,7 @@ import org.openstreetmap.josm.gui.Notification;
 import static org.openstreetmap.josm.tools.I18n.tr;
 import org.openstreetmap.josm.tools.ImageProvider;
 import org.openstreetmap.josm.tools.Pair;
+import org.openstreetmap.josm.tools.Predicates;
 import org.openstreetmap.josm.tools.Shortcut;
 import org.openstreetmap.josm.tools.Utils;
 
@@ -120,7 +121,7 @@ public class SplittingTool extends MapMode {
         boolean newNode = false;
         Node n = null;
 
-        n = Main.map.mapView.getNearestNode(mousePos, OsmPrimitive.isSelectablePredicate);
+        n = Main.map.mapView.getNearestNode(mousePos, OsmPrimitive::isSelectable);
 
         if (OsmPrimitive.getFilteredList(newSelection, Node.class).size() == 1 && OsmPrimitive.getFilteredList(newSelection, Way.class).isEmpty()) {
             newSelection.clear();
@@ -164,7 +165,7 @@ public class SplittingTool extends MapMode {
             cmds.add(new AddCommand(n));
 
             // Insert the node into all the nearby way segments
-            List<WaySegment> wss = Main.map.mapView.getNearestWaySegments(Main.map.mapView.getPoint(n), OsmPrimitive.isSelectablePredicate);
+            List<WaySegment> wss = Main.map.mapView.getNearestWaySegments(Main.map.mapView.getPoint(n), OsmPrimitive::isSelectable);
             insertNodeIntoAllNearbySegments(wss, n, newSelection, cmds, replacedWays, reuseWays);
         }
 

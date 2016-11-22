@@ -140,7 +140,8 @@ public class MergeBuildingsAction extends JosmAction {
             for (OsmPrimitive op : selection) {
                 if (op.getType().equals(OsmPrimitiveType.RELATION)) {
                     selectiontemporal.add(op);
-                    selection.removeAll(selection);
+                    selection.clear();
+                    //selection.removeAll(selection);
                     selection = selectiontemporal;
                 }
             }
