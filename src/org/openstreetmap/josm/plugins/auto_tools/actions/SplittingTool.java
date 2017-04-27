@@ -34,6 +34,7 @@ import org.openstreetmap.josm.data.osm.WaySegment;
 import org.openstreetmap.josm.gui.MapFrame;
 import org.openstreetmap.josm.gui.NavigatableComponent;
 import org.openstreetmap.josm.gui.Notification;
+import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import static org.openstreetmap.josm.tools.I18n.tr;
 import org.openstreetmap.josm.tools.ImageProvider;
 import org.openstreetmap.josm.tools.Pair;
@@ -54,7 +55,7 @@ public class SplittingTool extends MapMode {
     public SplittingTool(MapFrame mapFrame) {
         super(tr("Knife tool"), "iconknife", tr("Split way."),
                 Shortcut.registerShortcut("mapmode:KnifeTool", tr("Mode:KnifeTool", tr("Split")), KeyEvent.VK_T, Shortcut.DIRECT),
-                mapFrame, ImageProvider.getCursor("crosshair", null));
+                ImageProvider.getCursor("crosshair", null));
     }
 
     @Override
@@ -91,7 +92,7 @@ public class SplittingTool extends MapMode {
 
             @Override
             public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == Main.map.mapMode.getShortcut().getAssignedKey()) {
+                if (e.getKeyCode() == Main.map.mapMode.getShortcut().getAssignedKey() && Main.getLayerManager().getEditLayer()!=null) {
                     counter++;
                 }
             }
@@ -253,6 +254,7 @@ public class SplittingTool extends MapMode {
                     n.setEastNorth(intersection);
                     return;
                 }
+            // fall through
             default:
                 EastNorth p = n.getEastNorth();
                 seg = segs.iterator().next();

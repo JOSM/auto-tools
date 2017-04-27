@@ -42,93 +42,95 @@ public class MergeBuildingsAction extends JosmAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Relation rela = null;
+        if (Main.getLayerManager().getEditDataSet() != null) {
+            Relation rela = null;
 
-        LinkedList<Way> ways = new LinkedList<Way>(Main.getLayerManager().getEditDataSet().getSelectedWays());
-        if (ways.isEmpty() || ways.size() == 1) {
-            JOptionPane.showMessageDialog(null, "Select at least two ways");
-        } else {
-            //Filtrar los Tags, y sacar un promerio de ellos
-            Map<String, String> atrributes = new Hashtable<String, String>();
-            List<Double> areaList = new ArrayList<>();
-            List<String> bvList = new ArrayList<>();
-            LinkedList<OsmPrimitive> sel = new LinkedList<>();
+            LinkedList<Way> ways = new LinkedList<Way>(Main.getLayerManager().getEditDataSet().getSelectedWays());
+            if (ways.isEmpty() || ways.size() == 1) {
+                JOptionPane.showMessageDialog(null, "Select at least two ways");
+            } else {
+                //Filtrar los Tags, y sacar un promerio de ellos
+                Map<String, String> atrributes = new Hashtable<String, String>();
+                List<Double> areaList = new ArrayList<>();
+                List<String> bvList = new ArrayList<>();
+                LinkedList<OsmPrimitive> sel = new LinkedList<>();
 
-            for (OsmPrimitive osm : ways) {
-                if (OsmPrimitive.getFilteredList(osm.getReferrers(), Relation.class).size() > 0) {
-                    Relation relation = OsmPrimitive.getFilteredList(osm.getReferrers(), Relation.class).get(0);
-                    Set<String> keys = relation.getKeys().keySet();
-                    for (String key : keys) {
-                        if (!atrributes.containsKey(key)) {
-                            atrributes.put(key, relation.get(key));
-                        } else {
-                            if (!atrributes.get(key).equals(relation.get(key))) {
-                                String atrr = atrributes.get(key) + ";" + relation.get(key);
-                                atrributes.put(key, atrr);
+                for (OsmPrimitive osm : ways) {
+                    if (OsmPrimitive.getFilteredList(osm.getReferrers(), Relation.class).size() > 0) {
+                        Relation relation = OsmPrimitive.getFilteredList(osm.getReferrers(), Relation.class).get(0);
+                        Set<String> keys = relation.getKeys().keySet();
+                        for (String key : keys) {
+                            if (!atrributes.containsKey(key)) {
+                                atrributes.put(key, relation.get(key));
+                            } else {
+                                if (!atrributes.get(key).equals(relation.get(key))) {
+                                    String atrr = atrributes.get(key) + ";" + relation.get(key);
+                                    atrributes.put(key, atrr);
+                                }
                             }
                         }
-                    }
 
-                    areaList.add(findArea((Way) osm));
-                    bvList.add(relation.get("building"));
-                    rela = relation;
-                    sel.add(relation);
-                } else {
-                    Set<String> keys = osm.getKeys().keySet();
+                        areaList.add(findArea((Way) osm));
+                        bvList.add(relation.get("building"));
+                        rela = relation;
+                        sel.add(relation);
+                    } else {
+                        Set<String> keys = osm.getKeys().keySet();
 
-                    for (String key : keys) {
-                        if (!atrributes.containsKey(key)) {
-                            atrributes.put(key, osm.get(key));
-                        } else {
-                            if (!atrributes.get(key).equals(osm.get(key))) {
-                                String atrr = atrributes.get(key) + ";" + osm.get(key);
-                                atrributes.put(key, atrr);
+                        for (String key : keys) {
+                            if (!atrributes.containsKey(key)) {
+                                atrributes.put(key, osm.get(key));
+                            } else {
+                                if (!atrributes.get(key).equals(osm.get(key))) {
+                                    String atrr = atrributes.get(key) + ";" + osm.get(key);
+                                    atrributes.put(key, atrr);
+                                }
                             }
                         }
+                        areaList.add(findArea((Way) osm));
+                        bvList.add(osm.get("building"));
                     }
-                    areaList.add(findArea((Way) osm));
-                    bvList.add(osm.get("building"));
                 }
-            }
-            atrributes.put("building", bvList.get(areaList.indexOf(Collections.max(areaList))));
-            //Convertir  a tag collections
-            TagCollection tagCollection = new TagCollection();
-            for (Map.Entry<String, String> entry : atrributes.entrySet()) {
-                //https://github.com/osmlab/labuildings/blob/master/IMPORTING.md
-                //lacounty:ain -> ALL
-                //lacount:bld_id -> ALL
-                //start_date -> None if multiple or the one option if there's only one
-                //height -> largest number
-                //ele -> largest number
-                //building:units -> none if different
-                Tag tag;
-                if ((entry.getKey().equals("start_date") || entry.getKey().equals("building:units")) && entry.getValue().contains(";")) {
-                    tag = new Tag(entry.getKey(), null);
-                } else if ((entry.getKey().equals("height") || entry.getKey().equals("ele")) && entry.getValue().contains(";")) {
-                    String[] stringArray = entry.getValue().split(";");
-                    Double max = Double.parseDouble(stringArray[0]);
-                    for (int index = 1; index < stringArray.length; index++) {
-                        Double h = Double.parseDouble(stringArray[index]);
-                        if (h > max) {
-                            max = h;
+                atrributes.put("building", bvList.get(areaList.indexOf(Collections.max(areaList))));
+                //Convertir  a tag collections
+                TagCollection tagCollection = new TagCollection();
+                for (Map.Entry<String, String> entry : atrributes.entrySet()) {
+                    //https://github.com/osmlab/labuildings/blob/master/IMPORTING.md
+                    //lacounty:ain -> ALL
+                    //lacount:bld_id -> ALL
+                    //start_date -> None if multiple or the one option if there's only one
+                    //height -> largest number
+                    //ele -> largest number
+                    //building:units -> none if different
+                    Tag tag;
+                    if ((entry.getKey().equals("start_date") || entry.getKey().equals("building:units")) && entry.getValue().contains(";")) {
+                        tag = new Tag(entry.getKey(), null);
+                    } else if ((entry.getKey().equals("height") || entry.getKey().equals("ele")) && entry.getValue().contains(";")) {
+                        String[] stringArray = entry.getValue().split(";");
+                        Double max = Double.parseDouble(stringArray[0]);
+                        for (int index = 1; index < stringArray.length; index++) {
+                            Double h = Double.parseDouble(stringArray[index]);
+                            if (h > max) {
+                                max = h;
+                            }
                         }
+                        tag = new Tag(entry.getKey(), max.toString());
+                    } else {
+                        tag = new Tag(entry.getKey(), entry.getValue());
                     }
-                    tag = new Tag(entry.getKey(), max.toString());
-                } else {
-                    tag = new Tag(entry.getKey(), entry.getValue());
+                    tagCollection.add(tag);
                 }
-                tagCollection.add(tag);
-            }
-            sel.addAll(ways);
+                sel.addAll(ways);
 
-            Main.main.undoRedo.add(new SequenceCommand(tr("revert tags"), MergeAllTags(rela, sel, tagCollection)));
-            JosmAction build = new JoinAreasAction();
-            build.actionPerformed(e);
+                Main.main.undoRedo.add(new SequenceCommand(tr("revert tags"), MergeAllTags(rela, sel, tagCollection)));
+                JosmAction build = new JoinAreasAction();
+                build.actionPerformed(e);
+            }
         }
     }
 
-    protected Command MergeAllTags(Relation relation, Collection<? extends OsmPrimitive> selection, TagCollection tc) {
-        Collection<OsmPrimitive> selectiontemporal = new ArrayList<>();
+    protected Command MergeAllTags(Relation relation, List<OsmPrimitive> selection, TagCollection tc) {
+        List<OsmPrimitive> selectiontemporal = new ArrayList<>();
         Set<Way> selectionways = OsmPrimitive.getFilteredSet((List<OsmPrimitive>) selection, Way.class);
         List<Command> commands = new ArrayList<Command>();
 
