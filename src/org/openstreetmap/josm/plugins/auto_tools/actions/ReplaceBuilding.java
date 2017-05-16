@@ -133,10 +133,10 @@ public class ReplaceBuilding extends JosmAction {
         String valTarget = target.getKeys().get("building");
 
         if (valSource != null || valTarget != null) {
-            if (valSource.equals("yes") || valSource.equals(valTarget)) {
+            if (valSource != null && (valSource.equals("yes") || valSource.equals(valTarget))) {
                 source.setKeys(getAttributes(source, valTarget));
                 target.setKeys(getAttributes(target, valTarget));
-            } else if (valTarget.equals("yes")) {
+            } else if (valTarget != null && valTarget.equals("yes")) {
                 source.setKeys(getAttributes(source, valSource));
                 target.setKeys(getAttributes(target, valSource));
             }
@@ -166,12 +166,14 @@ public class ReplaceBuilding extends JosmAction {
     private static Map<String, String> getAttributes(OsmPrimitive osm, String value) {
         Map<String, String> atrributes = new Hashtable<String, String>();
         Set<String> keys = osm.getKeys().keySet();
-        for (String key : keys) {
-            if (!atrributes.containsKey(key)) {
-                if (key.equals("building")) {
-                    atrributes.put(key, value);
-                } else {
-                    atrributes.put(key, osm.get(key));
+        if (!keys.isEmpty()) {
+            for (String key : keys) {
+                if (!atrributes.containsKey(key)) {
+                    if (key.equals("building")) {
+                        atrributes.put(key, value);
+                    } else {
+                        atrributes.put(key, osm.get(key));
+                    }
                 }
             }
         }
