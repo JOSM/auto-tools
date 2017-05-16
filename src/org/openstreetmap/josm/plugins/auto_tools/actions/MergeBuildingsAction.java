@@ -91,7 +91,10 @@ public class MergeBuildingsAction extends JosmAction {
                         bvList.add(osm.get("building"));
                     }
                 }
-                atrributes.put("building", bvList.get(areaList.indexOf(Collections.max(areaList))));
+                if (bvList.get(areaList.indexOf(Collections.max(areaList))) != null) {
+                    atrributes.put("building", bvList.get(areaList.indexOf(Collections.max(areaList))));
+                }
+
                 //Convertir  a tag collections
                 TagCollection tagCollection = new TagCollection();
                 for (Map.Entry<String, String> entry : atrributes.entrySet()) {
@@ -135,7 +138,6 @@ public class MergeBuildingsAction extends JosmAction {
         List<Command> commands = new ArrayList<Command>();
 
         if (relation != null) {
-            System.out.println("entra...");
             for (OsmPrimitive op : selection) {
                 if (op.getType().equals(OsmPrimitiveType.RELATION)) {
                     selectiontemporal.add(op);
