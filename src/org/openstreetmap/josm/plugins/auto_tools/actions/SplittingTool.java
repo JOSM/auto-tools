@@ -1,5 +1,7 @@
 package org.openstreetmap.josm.plugins.auto_tools.actions;
 
+import static org.openstreetmap.josm.tools.I18n.tr;
+
 import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -14,16 +16,16 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.swing.JOptionPane;
+
 import org.openstreetmap.josm.Main;
-import org.openstreetmap.josm.actions.SplitWayAction.SplitWayResult;
-import static org.openstreetmap.josm.actions.SplitWayAction.buildSplitChunks;
-import static org.openstreetmap.josm.actions.SplitWayAction.splitWay;
 import org.openstreetmap.josm.actions.mapmode.MapMode;
 import org.openstreetmap.josm.command.AddCommand;
 import org.openstreetmap.josm.command.ChangeCommand;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.SequenceCommand;
+import org.openstreetmap.josm.command.SplitWayCommand;
 import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
@@ -31,11 +33,10 @@ import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.data.osm.WaySegment;
+import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.MapFrame;
 import org.openstreetmap.josm.gui.NavigatableComponent;
 import org.openstreetmap.josm.gui.Notification;
-import org.openstreetmap.josm.gui.layer.OsmDataLayer;
-import static org.openstreetmap.josm.tools.I18n.tr;
 import org.openstreetmap.josm.tools.ImageProvider;
 import org.openstreetmap.josm.tools.Pair;
 import org.openstreetmap.josm.tools.Shortcut;
@@ -65,26 +66,26 @@ public class SplittingTool extends MapMode {
         }
         super.enterMode();
         toleranceMultiplier = 0.01 * NavigatableComponent.PROP_SNAP_DISTANCE.get();
-        Main.map.mapView.addMouseListener(this);
+        MainApplication.getMap().mapView.addMouseListener(this);
 
     }
 
     @Override
     public void exitMode() {
         super.exitMode();
-        Main.map.mapView.removeMouseListener(this);
+        MainApplication.getMap().mapView.removeMouseListener(this);
 
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        if (e.getButton() == MouseEvent.BUTTON3 || e.getButton() != MouseEvent.BUTTON1 || !Main.map.mapView.isActiveLayerDrawable()) {
+        if (e.getButton() == MouseEvent.BUTTON3 || e.getButton() != MouseEvent.BUTTON1 || !MainApplication.getMap().mapView.isActiveLayerDrawable()) {
             return;
         }
 
         // Focus to enable shortcuts       
-        Main.map.mapView.requestFocus();
-        Main.map.mapView.addKeyListener(new KeyListener() {
+        MainApplication.getMap().mapView.requestFocus();
+        MainApplication.getMap().mapView.addKeyListener(new KeyListener() {
             @Override
             public void keyTyped(KeyEvent e) {
 
@@ -92,7 +93,7 @@ public class SplittingTool extends MapMode {
 
             @Override
             public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == Main.map.mapMode.getShortcut().getAssignedKey() && Main.getLayerManager().getEditLayer()!=null) {
+                if (e.getKeyCode() == MainApplication.getMap().mapMode.getShortcut().getAssignedKey() && MainApplication.getLayerManager().getEditLayer()!=null) {
                     counter++;
                 }
             }
@@ -100,7 +101,7 @@ public class SplittingTool extends MapMode {
             @Override
             public void keyReleased(KeyEvent e) {
                 if (counter != 0) {
-                    Main.map.selectMapMode(Main.map.mapModeSelect);
+                    MainApplication.getMap().selectMapMode(MainApplication.getMap().mapModeSelect);
                     counter = 0;
                 }
             }
@@ -111,7 +112,7 @@ public class SplittingTool extends MapMode {
         updateKeyModifiers(e);
         mousePos = e.getPoint();
 
-        DataSet ds = Main.getLayerManager().getEditDataSet();
+        DataSet ds = MainApplication.getLayerManager().getEditDataSet();
         Collection<Command> cmds = new LinkedList<>();
         Collection<OsmPrimitive> newSelection = new LinkedList<>(ds.getSelected());
 
@@ -121,24 +122,24 @@ public class SplittingTool extends MapMode {
         boolean newNode = false;
         Node n = null;
 
-        n = Main.map.mapView.getNearestNode(mousePos, OsmPrimitive::isSelectable);
+        n = MainApplication.getMap().mapView.getNearestNode(mousePos, OsmPrimitive::isSelectable);
 
         if (OsmPrimitive.getFilteredList(newSelection, Node.class).size() == 1 && OsmPrimitive.getFilteredList(newSelection, Way.class).isEmpty()) {
             newSelection.clear();
-            Main.getLayerManager().getEditDataSet().setSelected(newSelection);
+            MainApplication.getLayerManager().getEditDataSet().setSelected(newSelection);
         }
 
         if (n != null) {
             if (!newSelection.isEmpty()) {
                 SplitRoad(n, ds, newSelection);
-                Main.map.selectMapMode(Main.map.mapModeSelect);
+                MainApplication.getMap().selectMapMode(MainApplication.getMap().mapModeSelect);
                 return;
             }
         } else {
             if (n != null) {
                 // do not add new node if there is some node within snapping distance
                 EastNorth foundPoint = n.getEastNorth();
-                double tolerance = Main.map.mapView.getDist100Pixel() * toleranceMultiplier;
+                double tolerance = MainApplication.getMap().mapView.getDist100Pixel() * toleranceMultiplier;
                 if (foundPoint.distance(foundPoint) > tolerance) {
                     n = new Node(foundPoint);
                     newNode = true;
@@ -146,7 +147,7 @@ public class SplittingTool extends MapMode {
 
             } else {
                 // n==null, no node found in clicked area                
-                EastNorth mouseEN = Main.map.mapView.getEastNorth(e.getX(), e.getY());
+                EastNorth mouseEN = MainApplication.getMap().mapView.getEastNorth(e.getX(), e.getY());
                 n = new Node(mouseEN);
                 newNode = true;
             }
@@ -162,10 +163,10 @@ public class SplittingTool extends MapMode {
                 );
                 return;
             }
-            cmds.add(new AddCommand(n));
+            cmds.add(new AddCommand(ds, n));
 
             // Insert the node into all the nearby way segments
-            List<WaySegment> wss = Main.map.mapView.getNearestWaySegments(Main.map.mapView.getPoint(n), OsmPrimitive::isSelectable);
+            List<WaySegment> wss = MainApplication.getMap().mapView.getNearestWaySegments(MainApplication.getMap().mapView.getPoint(n), OsmPrimitive::isSelectable);
             insertNodeIntoAllNearbySegments(wss, n, newSelection, cmds, replacedWays, reuseWays);
         }
 
@@ -174,11 +175,11 @@ public class SplittingTool extends MapMode {
 
         //Delete the created node if not in a way
         if (OsmPrimitive.getFilteredList(n.getReferrers(), Way.class).isEmpty()) {
-            Main.getLayerManager().getEditDataSet().removePrimitive(n.getPrimitiveId());
+            MainApplication.getLayerManager().getEditDataSet().removePrimitive(n.getPrimitiveId());
 
         } else {
             SplitRoad(n, ds, newSelection);
-            Main.map.selectMapMode(Main.map.mapModeSelect);
+            MainApplication.getMap().selectMapMode(MainApplication.getMap().mapModeSelect);
         }
     }
 
@@ -250,7 +251,7 @@ public class SplittingTool extends MapMode {
                 // only adjust to intersection if within snapToIntersectionThreshold pixel of mouse click; otherwise
                 // fall through to default action.
                 // (for semi-parallel lines, intersection might be miles away!)
-                if (Main.map.mapView.getPoint2D(n).distance(Main.map.mapView.getPoint2D(intersection)) < snapToIntersectionThreshold) {
+                if (MainApplication.getMap().mapView.getPoint2D(n).distance(MainApplication.getMap().mapView.getPoint2D(intersection)) < snapToIntersectionThreshold) {
                     n.setEastNorth(intersection);
                     return;
                 }
@@ -353,13 +354,13 @@ public class SplittingTool extends MapMode {
             selectedWay = applicableWays.get(0);
         }
 
-        List<List<Node>> wayChunks = buildSplitChunks(selectedWay, selectedNodes);
+        List<List<Node>> wayChunks = SplitWayCommand.buildSplitChunks(selectedWay, selectedNodes);
         if (wayChunks != null) {
             List<OsmPrimitive> sel = new ArrayList<OsmPrimitive>(selectedWays.size() + selectedRelations.size());
             sel.addAll(selectedWays);
             sel.addAll(selectedRelations);
-            SplitWayResult result = splitWay(Main.getLayerManager().getEditLayer(), selectedWay, wayChunks, sel);
-            Main.main.undoRedo.add(result.getCommand());
+            SplitWayCommand result = SplitWayCommand.splitWay(selectedWay, wayChunks, sel);
+            Main.main.undoRedo.add(result);
 
             //Select the way to tag
             Way way2 = result.getNewWays().get(0);
@@ -452,21 +453,21 @@ public class SplittingTool extends MapMode {
         try {
             if ((ws1 > 2 && ws2 > 2) || (ws1 <= 2 && ws2 <= 2)) {
                 if (way.getLength() > way2.getLength()) {
-                    Main.getLayerManager().getEditDataSet().setSelected(way2);
+                    MainApplication.getLayerManager().getEditDataSet().setSelected(way2);
                 } else {
-                    Main.getLayerManager().getEditDataSet().setSelected(way);
+                    MainApplication.getLayerManager().getEditDataSet().setSelected(way);
                 }
             } else if (ws1 > 2 && ws2 <= 2) {
                 if (wsc > 2) {
-                    Main.getLayerManager().getEditDataSet().setSelected(way2);
+                    MainApplication.getLayerManager().getEditDataSet().setSelected(way2);
                 } else {
-                    Main.getLayerManager().getEditDataSet().setSelected(way);
+                    MainApplication.getLayerManager().getEditDataSet().setSelected(way);
                 }
             } else if (ws1 <= 2 && ws2 > 2) {
                 if (wsc > 2) {
-                    Main.getLayerManager().getEditDataSet().setSelected(way);
+                    MainApplication.getLayerManager().getEditDataSet().setSelected(way);
                 } else {
-                    Main.getLayerManager().getEditDataSet().setSelected(way2);
+                    MainApplication.getLayerManager().getEditDataSet().setSelected(way2);
                 }
 
             }

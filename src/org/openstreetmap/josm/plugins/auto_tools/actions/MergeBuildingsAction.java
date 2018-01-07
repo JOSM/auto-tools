@@ -1,16 +1,20 @@
 package org.openstreetmap.josm.plugins.auto_tools.actions;
 
+import static org.openstreetmap.josm.gui.mappaint.mapcss.ExpressionFactory.Functions.tr;
+import static org.openstreetmap.josm.tools.I18n.trn;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.swing.JOptionPane;
+
 import org.openstreetmap.josm.Main;
 import org.openstreetmap.josm.actions.JoinAreasAction;
 import org.openstreetmap.josm.actions.JosmAction;
@@ -25,8 +29,7 @@ import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.Tag;
 import org.openstreetmap.josm.data.osm.TagCollection;
 import org.openstreetmap.josm.data.osm.Way;
-import static org.openstreetmap.josm.gui.mappaint.mapcss.ExpressionFactory.Functions.tr;
-import static org.openstreetmap.josm.tools.I18n.trn;
+import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.tools.Shortcut;
 
 /**
@@ -42,10 +45,10 @@ public class MergeBuildingsAction extends JosmAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (Main.getLayerManager().getEditDataSet() != null) {
+        if (MainApplication.getLayerManager().getEditDataSet() != null) {
             Relation rela = null;
 
-            LinkedList<Way> ways = new LinkedList<Way>(Main.getLayerManager().getEditDataSet().getSelectedWays());
+            LinkedList<Way> ways = new LinkedList<Way>(MainApplication.getLayerManager().getEditDataSet().getSelectedWays());
             if (ways.isEmpty() || ways.size() == 1) {
                 JOptionPane.showMessageDialog(null, "Select at least two ways");
             } else {
@@ -170,7 +173,6 @@ public class MergeBuildingsAction extends JosmAction {
     }
 
     protected Double findArea(Way w) {
-        double length = 0.0;
         Node lastN = null;
         double wayArea = 0.0;
         Double firstSegLength = null;
@@ -184,9 +186,8 @@ public class MergeBuildingsAction extends JosmAction {
                 if (isCircle && Math.abs(firstSegLength - segLength) > 0.000001) {
                     isCircle = false;
                 }
-                length += segLength;
                 wayArea += (calcX(n.getCoor()) * calcY(lastN.getCoor()))
-                        - (calcY(n.getCoor()) * calcX(lastN.getCoor()));
+                         - (calcY(n.getCoor()) * calcX(lastN.getCoor()));
             }
             lastN = n;
         }

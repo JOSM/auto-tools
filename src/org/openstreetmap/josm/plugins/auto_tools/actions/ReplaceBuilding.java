@@ -12,6 +12,7 @@ import javax.swing.JOptionPane;
 import org.openstreetmap.josm.Main;
 import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
+import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.tools.Shortcut;
 import java.util.Collection;
@@ -33,7 +34,7 @@ import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.RelationMember;
 import org.openstreetmap.josm.data.osm.TagCollection;
 import org.openstreetmap.josm.data.osm.Way;
-import org.openstreetmap.josm.gui.DefaultNameFormatter;
+import org.openstreetmap.josm.data.osm.DefaultNameFormatter;
 import org.openstreetmap.josm.gui.conflict.tags.CombinePrimitiveResolverDialog;
 import static org.openstreetmap.josm.gui.mappaint.mapcss.ExpressionFactory.Functions.tr;
 import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.*;
@@ -52,11 +53,11 @@ public class ReplaceBuilding extends JosmAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (Main.getLayerManager().getEditDataSet() == null) {
+        if (MainApplication.getLayerManager().getEditDataSet() == null) {
             return;
         }
 
-        List<OsmPrimitive> selection = new ArrayList<>(Main.getLayerManager().getEditDataSet().getSelected());
+        List<OsmPrimitive> selection = new ArrayList<>(MainApplication.getLayerManager().getEditDataSet().getSelected());
         if (selection.isEmpty()) {
             new Notification(tr("Select at least one building.")).setIcon(JOptionPane.WARNING_MESSAGE).show();
             return;
@@ -71,7 +72,7 @@ public class ReplaceBuilding extends JosmAction {
         Set<Way> newWays = new HashSet<>();
 
         if (selectedWays.size() == 1) {
-            newWays = addWaysIntersectingWaysRecursively(Main.getLayerManager().getEditDataSet().getWays(), selectedWays, newWays);
+            newWays = addWaysIntersectingWaysRecursively(MainApplication.getLayerManager().getEditDataSet().getWays(), selectedWays, newWays);
             if (newWays.size() > 2) {
                 new Notification(tr("Select two buildings.")).setIcon(JOptionPane.WARNING_MESSAGE).show();
                 return;
@@ -249,7 +250,7 @@ public class ReplaceBuilding extends JosmAction {
             commands.add(new DeleteCommand(subjectNode));
         }
 
-        Main.getLayerManager().getEditDataSet().setSelected(referenceObject);
+        MainApplication.getLayerManager().getEditDataSet().setSelected(referenceObject);
 
         return new ReplaceGeometryCommand(
                 tr("Replace geometry for node {0}", subjectNode.getDisplayName(DefaultNameFormatter.getInstance())),
@@ -288,7 +289,7 @@ public class ReplaceBuilding extends JosmAction {
 
     public static ReplaceGeometryCommand buildReplaceWayCommand(Way subjectWay, Way referenceWay) {
 
-        Area a = Main.getLayerManager().getEditDataSet().getDataSourceArea();
+        Area a = MainApplication.getLayerManager().getEditDataSet().getDataSourceArea();
         if (!isInArea(subjectWay, a) || !isInArea(referenceWay, a)) {
             throw new ReplaceGeometryException(tr("The ways must be entirely within the downloaded area."));
         }
@@ -410,7 +411,7 @@ public class ReplaceBuilding extends JosmAction {
         }
 
         // Remove geometry way from selection
-        Main.getLayerManager().getEditDataSet().clearSelection(referenceWay);
+        MainApplication.getLayerManager().getEditDataSet().clearSelection(referenceWay);
 
         // And delete old geometry way
         commands.add(new DeleteCommand(referenceWay));
@@ -524,10 +525,10 @@ public class ReplaceBuilding extends JosmAction {
             foundWays = newFoundWays;
             newWays.addAll(newFoundWays);
             level++;
-            if (c > Main.pref.getInteger("selection.maxfoundways.intersection", 500)) {
+            if (c > Main.pref.getInt("selection.maxfoundways.intersection", 500)) {
                 new Notification(tr("Too many ways are added: {0}!" + c)).setIcon(JOptionPane.WARNING_MESSAGE).show();
             }
-        } while (c > 0 && level < Main.pref.getInteger("selection.maxrecursion", 15));
+        } while (c > 0 && level < Main.pref.getInt("selection.maxrecursion", 15));
 
         return newWays;
     }
