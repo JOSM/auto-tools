@@ -55,7 +55,7 @@ public class SplittingTool extends MapMode {
 
     public SplittingTool(MapFrame mapFrame) {
         super(tr("Knife tool"), "iconknife", tr("Split way."),
-                Shortcut.registerShortcut("mapmode:KnifeTool", tr("Mode:KnifeTool", tr("Split")), KeyEvent.VK_T, Shortcut.DIRECT),
+                Shortcut.registerShortcut("mapmode:KnifeTool", tr("Mode: {0}", tr("Knife tool")), KeyEvent.VK_T, Shortcut.DIRECT),
                 ImageProvider.getCursor("crosshair", null));
     }
 
