@@ -170,8 +170,10 @@ public class SplittingTool extends MapMode {
             insertNodeIntoAllNearbySegments(wss, n, newSelection, cmds, replacedWays, reuseWays);
         }
 
-        Command c = new SequenceCommand("Add node into way and connect", cmds);
-        Main.main.undoRedo.add(c);
+        if (!cmds.isEmpty()) {
+            Command c = new SequenceCommand("Add node into way and connect", cmds);
+            Main.main.undoRedo.add(c);
+        }
 
         //Delete the created node if not in a way
         if (OsmPrimitive.getFilteredList(n.getReferrers(), Way.class).isEmpty()) {
