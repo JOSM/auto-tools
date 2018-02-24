@@ -77,7 +77,7 @@ public class ReplaceBuilding extends JosmAction {
                 new Notification(tr("Select two buildings.")).setIcon(JOptionPane.WARNING_MESSAGE).show();
                 return;
             } else if (newWays.size() < 2) {
-                new Notification(tr("There's no building to replace")).setIcon(JOptionPane.WARNING_MESSAGE).show();
+                new Notification(tr("There is no building to replace")).setIcon(JOptionPane.WARNING_MESSAGE).show();
                 return;
             }
             selection.clear();
