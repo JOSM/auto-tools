@@ -2,7 +2,7 @@
 <project name="auto_tools" default="dist" basedir=".">
     <property name="commit.message" value="Auto Tools"/>
     <property name="plugin.main.version" value="13265"/>
-    <property name="plugin.version" value="v1.1"/>
+    <property name="plugin.version" value="v1.2"/>
     <property name="plugin.author" value="Rub21,samely"/>
     <property name="plugin.class" value="org.openstreetmap.josm.plugins.auto_tools.AutoTools"/>   
     <property name="plugin.description" value="Automatic tools to help on common issues"/>

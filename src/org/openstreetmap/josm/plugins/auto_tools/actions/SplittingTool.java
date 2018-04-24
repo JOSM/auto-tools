@@ -3,8 +3,8 @@ package org.openstreetmap.josm.plugins.auto_tools.actions;
 import static org.openstreetmap.josm.tools.I18n.tr;
 
 import java.awt.Point;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -85,15 +85,11 @@ public class SplittingTool extends MapMode {
 
         // Focus to enable shortcuts       
         MainApplication.getMap().mapView.requestFocus();
-        MainApplication.getMap().mapView.addKeyListener(new KeyListener() {
-            @Override
-            public void keyTyped(KeyEvent e) {
-
-            }
-
+        MainApplication.getMap().mapView.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == MainApplication.getMap().mapMode.getShortcut().getAssignedKey() && MainApplication.getLayerManager().getEditLayer()!=null) {
+                if (MainApplication.getMap() != null && e.getKeyCode() == MainApplication.getMap().mapMode.getShortcut().getAssignedKey()
+                        && MainApplication.getLayerManager().getEditLayer()!=null) {
                     counter++;
                 }
             }
@@ -101,11 +97,12 @@ public class SplittingTool extends MapMode {
             @Override
             public void keyReleased(KeyEvent e) {
                 if (counter != 0) {
-                    MainApplication.getMap().selectMapMode(MainApplication.getMap().mapModeSelect);
+                    if (MainApplication.getMap() != null) {
+                        MainApplication.getMap().selectMapMode(MainApplication.getMap().mapModeSelect);
+                    }
                     counter = 0;
                 }
             }
-
         });
 
         //Control key modifiers
