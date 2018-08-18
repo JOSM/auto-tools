@@ -19,13 +19,13 @@ import java.util.Set;
 
 import javax.swing.JOptionPane;
 
-import org.openstreetmap.josm.Main;
 import org.openstreetmap.josm.actions.mapmode.MapMode;
 import org.openstreetmap.josm.command.AddCommand;
 import org.openstreetmap.josm.command.ChangeCommand;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.SequenceCommand;
 import org.openstreetmap.josm.command.SplitWayCommand;
+import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
@@ -38,6 +38,7 @@ import org.openstreetmap.josm.gui.MapFrame;
 import org.openstreetmap.josm.gui.NavigatableComponent;
 import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.tools.ImageProvider;
+import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Pair;
 import org.openstreetmap.josm.tools.Shortcut;
 import org.openstreetmap.josm.tools.Utils;
@@ -153,7 +154,7 @@ public class SplittingTool extends MapMode {
         if (newNode) {
             if (n.getCoor().isOutSideWorld()) {
                 JOptionPane.showMessageDialog(
-                        Main.parent,
+                        MainApplication.getMainFrame(),
                         tr("Cannot add a node outside of the world."),
                         tr("Warning"),
                         JOptionPane.WARNING_MESSAGE
@@ -169,7 +170,7 @@ public class SplittingTool extends MapMode {
 
         if (!cmds.isEmpty()) {
             Command c = new SequenceCommand("Add node into way and connect", cmds);
-            Main.main.undoRedo.add(c);
+            UndoRedoHandler.getInstance().add(c);
         }
 
         //Delete the created node if not in a way
@@ -359,7 +360,7 @@ public class SplittingTool extends MapMode {
             sel.addAll(selectedWays);
             sel.addAll(selectedRelations);
             SplitWayCommand result = SplitWayCommand.splitWay(selectedWay, wayChunks, sel);
-            Main.main.undoRedo.add(result);
+            UndoRedoHandler.getInstance().add(result);
 
             //Select the way to tag
             Way way2 = result.getNewWays().get(0);
@@ -375,7 +376,7 @@ public class SplittingTool extends MapMode {
                 }
 
             } catch (Exception e) {
-                e.printStackTrace();
+                Logging.error(e);
             }
         }
 
@@ -471,7 +472,7 @@ public class SplittingTool extends MapMode {
 
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Logging.error(e);
         }
 
     }

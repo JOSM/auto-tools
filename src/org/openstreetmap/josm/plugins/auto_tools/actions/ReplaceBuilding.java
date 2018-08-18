@@ -1,48 +1,53 @@
 package org.openstreetmap.josm.plugins.auto_tools.actions;
 
-import edu.princeton.cs.algs4.AssignmentProblem;
+import static org.openstreetmap.josm.gui.mappaint.mapcss.ExpressionFactory.Functions.tr;
+import static org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryUtils.buildReplaceNodeWithNewCommand;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.geom.Area;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import javax.swing.JOptionPane;
-import org.openstreetmap.josm.Main;
-import org.openstreetmap.josm.actions.JosmAction;
-import org.openstreetmap.josm.data.osm.OsmPrimitive;
-import org.openstreetmap.josm.gui.MainApplication;
-import org.openstreetmap.josm.gui.Notification;
-import org.openstreetmap.josm.tools.Shortcut;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.swing.JOptionPane;
+
+import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.command.ChangeNodesCommand;
 import org.openstreetmap.josm.command.ChangePropertyCommand;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.DeleteCommand;
 import org.openstreetmap.josm.command.MoveCommand;
+import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.coor.LatLon;
+import org.openstreetmap.josm.data.osm.DefaultNameFormatter;
 import org.openstreetmap.josm.data.osm.Node;
+import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Relation;
 import org.openstreetmap.josm.data.osm.RelationMember;
 import org.openstreetmap.josm.data.osm.TagCollection;
 import org.openstreetmap.josm.data.osm.Way;
-import org.openstreetmap.josm.data.osm.DefaultNameFormatter;
+import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.Notification;
 import org.openstreetmap.josm.gui.conflict.tags.CombinePrimitiveResolverDialog;
-import static org.openstreetmap.josm.gui.mappaint.mapcss.ExpressionFactory.Functions.tr;
-import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.*;
-import static org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryUtils.*;
+import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryCommand;
+import org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryException;
+import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.Geometry;
 import org.openstreetmap.josm.tools.Pair;
-
+import org.openstreetmap.josm.tools.Shortcut;
 import org.openstreetmap.josm.tools.UserCancelException;
+
+import edu.princeton.cs.algs4.AssignmentProblem;
 
 public class ReplaceBuilding extends JosmAction {
 
@@ -104,7 +109,7 @@ public class ReplaceBuilding extends JosmAction {
                 return;
             }
 
-            Main.main.undoRedo.add(replaceCommand);
+            UndoRedoHandler.getInstance().add(replaceCommand);
         } catch (IllegalArgumentException | ReplaceGeometryException ex) {
             new Notification(ex.getMessage()).setIcon(JOptionPane.WARNING_MESSAGE).show();
         }
@@ -325,7 +330,7 @@ public class ReplaceBuilding extends JosmAction {
             }
         }
 
-        boolean useRobust = Main.pref.getBoolean("utilsplugin2.replace-geometry.robustAssignment", true);
+        boolean useRobust = Config.getPref().getBoolean("utilsplugin2.replace-geometry.robustAssignment", true);
 
         // Find new nodes that are closest to the old ones, remove matching old ones from the pool
         // Assign node moves with least overall distance moved
@@ -342,7 +347,7 @@ public class ReplaceBuilding extends JosmAction {
                     }
                 }
 
-                double maxDistance = Double.parseDouble(Main.pref.get("utilsplugin2.replace-geometry.max-distance", "1"));
+                double maxDistance = Double.parseDouble(Config.getPref().get("utilsplugin2.replace-geometry.max-distance", "1"));
                 for (int i = 0; i < nLen; i++) {
                     for (int j = 0; j < gLen; j++) {
                         double d = nodePool.get(i).getCoor().distance(geometryPool.get(j).getCoor());
@@ -434,7 +439,7 @@ public class ReplaceBuilding extends JosmAction {
 
         Node nearest = null;
         // TODO: use meters instead of degrees, but do it fast
-        double distance = Double.parseDouble(Main.pref.get("utilsplugin2.replace-geometry.max-distance", "1"));
+        double distance = Double.parseDouble(Config.getPref().get("utilsplugin2.replace-geometry.max-distance", "1"));
         LatLon coor = node.getCoor();
 
         for (Node n : nodes) {
@@ -525,10 +530,10 @@ public class ReplaceBuilding extends JosmAction {
             foundWays = newFoundWays;
             newWays.addAll(newFoundWays);
             level++;
-            if (c > Main.pref.getInt("selection.maxfoundways.intersection", 500)) {
+            if (c > Config.getPref().getInt("selection.maxfoundways.intersection", 500)) {
                 new Notification(tr("Too many ways are added: {0}!" + c)).setIcon(JOptionPane.WARNING_MESSAGE).show();
             }
-        } while (c > 0 && level < Main.pref.getInt("selection.maxrecursion", 15));
+        } while (c > 0 && level < Config.getPref().getInt("selection.maxrecursion", 15));
 
         return newWays;
     }

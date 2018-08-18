@@ -15,12 +15,12 @@ import java.util.Set;
 
 import javax.swing.JOptionPane;
 
-import org.openstreetmap.josm.Main;
 import org.openstreetmap.josm.actions.JoinAreasAction;
 import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.command.ChangePropertyCommand;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.SequenceCommand;
+import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
@@ -128,7 +128,7 @@ public class MergeBuildingsAction extends JosmAction {
                 }
                 sel.addAll(ways);
 
-                Main.main.undoRedo.add(new SequenceCommand(tr("revert tags"), MergeAllTags(rela, sel, tagCollection)));
+                UndoRedoHandler.getInstance().add(new SequenceCommand(tr("revert tags"), MergeAllTags(rela, sel, tagCollection)));
                 JosmAction build = new JoinAreasAction();
                 build.actionPerformed(e);
             }
