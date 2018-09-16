@@ -2,7 +2,7 @@
 <project name="auto_tools" default="dist" basedir=".">
     <property name="commit.message" value="Auto Tools"/>
     <property name="plugin.main.version" value="14153"/>
-    <property name="plugin.version" value="v1.3"/>
+    <property name="plugin.version" value="v1.3.1"/>
     <property name="plugin.author" value="Rub21,samely"/>
     <property name="plugin.class" value="org.openstreetmap.josm.plugins.auto_tools.AutoTools"/>   
     <property name="plugin.description" value="Automatic tools to help on common issues"/>
@@ -10,6 +10,12 @@
     <property name="plugin.canloadatruntime" value="true"/>
     <property name="plugin.icon" value="images/wrench.png"/>
     <property name="plugin.requires" value="utilsplugin2"/>
+    <target name="additional-manifest">
+        <manifest file="MANIFEST" mode="update">
+            <attribute name="13265_Plugin-Url" value="v1.2;https://github.com/JOSM/auto-tools/releases/download/v1.2/auto_tools.jar" />
+            <attribute name="13922_Plugin-Url" value="v1.3;https://github.com/JOSM/auto-tools/releases/download/v1.3/auto_tools.jar" />
+        </manifest>
+    </target>
     <import file="../build-common.xml"/>
     <fileset id="plugin.requires.jars" dir="${plugin.dist.dir}">
         <include name="utilsplugin2.jar"/>        
