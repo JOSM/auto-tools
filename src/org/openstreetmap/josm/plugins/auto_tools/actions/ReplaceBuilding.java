@@ -1,6 +1,6 @@
 package org.openstreetmap.josm.plugins.auto_tools.actions;
 
-import static org.openstreetmap.josm.gui.mappaint.mapcss.ExpressionFactory.Functions.tr;
+import static org.openstreetmap.josm.tools.I18n.tr;
 import static org.openstreetmap.josm.plugins.utilsplugin2.replacegeometry.ReplaceGeometryUtils.buildReplaceNodeWithNewCommand;
 
 import java.awt.event.ActionEvent;
