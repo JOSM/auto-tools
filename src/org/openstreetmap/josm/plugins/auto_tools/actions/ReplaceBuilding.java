@@ -46,6 +46,7 @@ import org.openstreetmap.josm.tools.Geometry;
 import org.openstreetmap.josm.tools.Pair;
 import org.openstreetmap.josm.tools.Shortcut;
 import org.openstreetmap.josm.tools.UserCancelException;
+import org.openstreetmap.josm.tools.Utils;
 
 import edu.princeton.cs.algs4.AssignmentProblem;
 
@@ -68,12 +69,12 @@ public class ReplaceBuilding extends JosmAction {
             return;
         }
 
-        if (!OsmPrimitive.getFilteredSet(selection, Node.class).isEmpty()) {
+        if (!Utils.filteredCollection(selection, Node.class).isEmpty()) {
             new Notification(tr("Select only buildings without nodes.")).setIcon(JOptionPane.WARNING_MESSAGE).show();
             return;
         }
 
-        Set<Way> selectedWays = OsmPrimitive.getFilteredSet(selection, Way.class);
+        Set<Way> selectedWays = new HashSet<>(Utils.filteredCollection(selection, Way.class));
         Set<Way> newWays = new HashSet<>();
 
         if (selectedWays.size() == 1) {
@@ -187,7 +188,7 @@ public class ReplaceBuilding extends JosmAction {
     }
 
     public static ReplaceGeometryCommand buildUpgradeNodeCommand(Node subjectNode, OsmPrimitive referenceObject) {
-        if (!OsmPrimitive.getFilteredList(subjectNode.getReferrers(), Way.class).isEmpty()) {
+        if (!Utils.filteredCollection(subjectNode.getReferrers(), Way.class).isEmpty()) {
             throw new ReplaceGeometryException(tr("Node belongs to way(s), cannot replace."));
         }
 

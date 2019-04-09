@@ -7,6 +7,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
@@ -31,6 +32,7 @@ import org.openstreetmap.josm.data.osm.TagCollection;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.tools.Shortcut;
+import org.openstreetmap.josm.tools.Utils;
 
 /**
  *
@@ -59,8 +61,8 @@ public class MergeBuildingsAction extends JosmAction {
                 LinkedList<OsmPrimitive> sel = new LinkedList<>();
 
                 for (OsmPrimitive osm : ways) {
-                    if (OsmPrimitive.getFilteredList(osm.getReferrers(), Relation.class).size() > 0) {
-                        Relation relation = OsmPrimitive.getFilteredList(osm.getReferrers(), Relation.class).get(0);
+                    if (Utils.filteredCollection(osm.getReferrers(), Relation.class).size() > 0) {
+                        Relation relation = new ArrayList<>(Utils.filteredCollection(osm.getReferrers(), Relation.class)).get(0);
                         Set<String> keys = relation.getKeys().keySet();
                         for (String key : keys) {
                             if (!atrributes.containsKey(key)) {
@@ -137,7 +139,7 @@ public class MergeBuildingsAction extends JosmAction {
 
     protected Command MergeAllTags(Relation relation, List<OsmPrimitive> selection, TagCollection tc) {
         List<OsmPrimitive> selectiontemporal = new ArrayList<>();
-        Set<Way> selectionways = OsmPrimitive.getFilteredSet((List<OsmPrimitive>) selection, Way.class);
+        Set<Way> selectionways = new HashSet<>(Utils.filteredCollection((List<OsmPrimitive>) selection, Way.class));
         List<Command> commands = new ArrayList<Command>();
 
         if (relation != null) {
