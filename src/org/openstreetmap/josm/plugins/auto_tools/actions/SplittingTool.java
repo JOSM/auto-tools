@@ -123,7 +123,7 @@ public class SplittingTool extends MapMode {
 
         n = MainApplication.getMap().mapView.getNearestNode(mousePos, OsmPrimitive::isSelectable);
 
-        if (OsmPrimitive.getFilteredList(newSelection, Node.class).size() == 1 && OsmPrimitive.getFilteredList(newSelection, Way.class).isEmpty()) {
+        if (Utils.filteredCollection(newSelection, Node.class).size() == 1 && Utils.filteredCollection(newSelection, Way.class).isEmpty()) {
             newSelection.clear();
             MainApplication.getLayerManager().getEditDataSet().setSelected(newSelection);
         }
@@ -175,7 +175,7 @@ public class SplittingTool extends MapMode {
         }
 
         //Delete the created node if not in a way
-        if (OsmPrimitive.getFilteredList(n.getReferrers(), Way.class).isEmpty()) {
+        if (Utils.filteredCollection(n.getReferrers(), Way.class).isEmpty()) {
             MainApplication.getLayerManager().getEditDataSet().removePrimitive(n.getPrimitiveId());
 
         } else {
@@ -303,9 +303,9 @@ public class SplittingTool extends MapMode {
 
         newSelection.add(way);
 
-        List<Node> selectedNodes = OsmPrimitive.getFilteredList(newSelection, Node.class);
-        List<Way> selectedWays = OsmPrimitive.getFilteredList(newSelection, Way.class);
-        List<Relation> selectedRelations = OsmPrimitive.getFilteredList(newSelection, Relation.class);
+        List<Node> selectedNodes = new ArrayList<>(Utils.filteredCollection(newSelection, Node.class));
+        List<Way> selectedWays = new ArrayList<>(Utils.filteredCollection(newSelection, Way.class));
+        List<Relation> selectedRelations = new ArrayList<>(Utils.filteredCollection(newSelection, Relation.class));
 
         List<Way> applicableWays = getApplicableWays(selectedWays, selectedNodes);
 
@@ -349,8 +349,8 @@ public class SplittingTool extends MapMode {
         Way selectedWay = null;
 
         // Finally, applicableWays contains only one perfect way
-        if (selectionToSplit != null && selectionToSplit.size() == 1 && applicableWays.contains(OsmPrimitive.getFilteredList(selectionToSplit, Way.class).get(0))) {
-            selectedWay = OsmPrimitive.getFilteredList(selectionToSplit, Way.class).get(0);
+        if (selectionToSplit != null && selectionToSplit.size() == 1 && applicableWays.contains(new ArrayList<>(Utils.filteredCollection(selectionToSplit, Way.class)).get(0))) {
+            selectedWay = new ArrayList<>(Utils.filteredCollection(selectionToSplit, Way.class)).get(0);
         } else {
             selectedWay = applicableWays.get(0);
         }
@@ -392,7 +392,7 @@ public class SplittingTool extends MapMode {
         // Special case - one of the selected ways touches (not cross) way that we want to split
         if (selectedNodes.size() == 1) {
             Node n = selectedNodes.get(0);
-            List<Way> referedWays = OsmPrimitive.getFilteredList(n.getReferrers(), Way.class);
+            List<Way> referedWays = new ArrayList<>(Utils.filteredCollection(n.getReferrers(), Way.class));
             Way inTheMiddle = null;
             boolean foundSelected = false;
             for (Way w : referedWays) {
@@ -415,7 +415,7 @@ public class SplittingTool extends MapMode {
         }
 
         // List of ways shared by all nodes
-        List<Way> result = new ArrayList<Way>(OsmPrimitive.getFilteredList(selectedNodes.get(0).getReferrers(), Way.class));
+        List<Way> result = new ArrayList<Way>(Utils.filteredCollection(selectedNodes.get(0).getReferrers(), Way.class));
         for (int i = 1; i < selectedNodes.size(); i++) {
             List<OsmPrimitive> ref = selectedNodes.get(i).getReferrers();
             for (Iterator<Way> it = result.iterator(); it.hasNext();) {
@@ -447,9 +447,9 @@ public class SplittingTool extends MapMode {
 
     public static void selectTheWay(Way way, Way way2, Node n1, Node n2, Node common) {
 
-        int ws1 = OsmPrimitive.getFilteredList(n1.getReferrers(), Way.class).size();
-        int ws2 = OsmPrimitive.getFilteredList(n2.getReferrers(), Way.class).size();
-        int wsc = OsmPrimitive.getFilteredList(common.getReferrers(), Way.class).size();
+        int ws1 = Utils.filteredCollection(n1.getReferrers(), Way.class).size();
+        int ws2 = Utils.filteredCollection(n2.getReferrers(), Way.class).size();
+        int wsc = Utils.filteredCollection(common.getReferrers(), Way.class).size();
 
         try {
             if ((ws1 > 2 && ws2 > 2) || (ws1 <= 2 && ws2 <= 2)) {
