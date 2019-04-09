@@ -89,8 +89,9 @@ public class SplittingTool extends MapMode {
         MainApplication.getMap().mapView.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
-                if (MainApplication.getMap() != null && e.getKeyCode() == MainApplication.getMap().mapMode.getShortcut().getAssignedKey()
-                        && MainApplication.getLayerManager().getEditLayer()!=null) {
+                if (MainApplication.getMap() != null && MainApplication.getMap().mapMode != null
+                        && e.getKeyCode() == MainApplication.getMap().mapMode.getShortcut().getAssignedKey()
+                        && MainApplication.getLayerManager().getEditLayer() != null) {
                     counter++;
                 }
             }
