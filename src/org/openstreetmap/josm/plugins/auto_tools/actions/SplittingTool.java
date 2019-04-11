@@ -349,7 +349,8 @@ public class SplittingTool extends MapMode {
         Way selectedWay = null;
 
         // Finally, applicableWays contains only one perfect way
-        if (selectionToSplit != null && selectionToSplit.size() == 1 && applicableWays.contains(new ArrayList<>(Utils.filteredCollection(selectionToSplit, Way.class)).get(0))) {
+        ArrayList<Way> list = new ArrayList<>(Utils.filteredCollection(selectionToSplit, Way.class));
+        if (selectionToSplit != null && selectionToSplit.size() == 1 && list.size() > 1 && applicableWays.contains(list.get(0))) {
             selectedWay = new ArrayList<>(Utils.filteredCollection(selectionToSplit, Way.class)).get(0);
         } else {
             selectedWay = applicableWays.get(0);
