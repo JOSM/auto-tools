@@ -153,7 +153,7 @@ public class SplittingTool extends MapMode {
         }
         //Create new node
         if (newNode) {
-            if (n.getCoor().isOutSideWorld()) {
+            if (n.isOutSideWorld()) {
                 JOptionPane.showMessageDialog(
                         MainApplication.getMainFrame(),
                         tr("Cannot add a node outside of the world."),
