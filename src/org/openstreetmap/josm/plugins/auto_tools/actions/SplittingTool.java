@@ -28,6 +28,7 @@ import org.openstreetmap.josm.command.SplitWayCommand;
 import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.osm.DataSet;
+import org.openstreetmap.josm.data.osm.IWaySegment;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Relation;
@@ -185,17 +186,17 @@ public class SplittingTool extends MapMode {
     }
 
     private void insertNodeIntoAllNearbySegments(List<WaySegment> wss, Node n, Collection<OsmPrimitive> newSelection,
-            Collection<Command> cmds, List<Way> replacedWays, List<Way> reuseWays) {
+                                                 Collection<Command> cmds, List<Way> replacedWays, List<Way> reuseWays) {
         Map<Way, List<Integer>> insertPoints = new HashMap<>();
-        for (WaySegment ws : wss) {
+        for (IWaySegment<Node, Way> ws : wss) {
             List<Integer> is;
-            if (insertPoints.containsKey(ws.way)) {
-                is = insertPoints.get(ws.way);
+            if (insertPoints.containsKey(ws.getWay())) {
+                is = insertPoints.get(ws.getWay());
             } else {
                 is = new ArrayList<>();
-                insertPoints.put(ws.way, is);
+                insertPoints.put(ws.getWay(), is);
             }
-            is.add(ws.lowerIndex);
+            is.add(ws.getLowerIndex());
         }
 
         Set<Pair<Node, Node>> segSet = new HashSet<>();
