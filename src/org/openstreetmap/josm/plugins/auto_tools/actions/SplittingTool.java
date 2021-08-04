@@ -15,6 +15,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.swing.JOptionPane;
@@ -359,27 +360,30 @@ public class SplittingTool extends MapMode {
 
         List<List<Node>> wayChunks = SplitWayCommand.buildSplitChunks(selectedWay, selectedNodes);
         if (wayChunks != null) {
-            List<OsmPrimitive> sel = new ArrayList<OsmPrimitive>(selectedWays.size() + selectedRelations.size());
+            List<OsmPrimitive> sel = new ArrayList<>(selectedWays.size() + selectedRelations.size());
             sel.addAll(selectedWays);
             sel.addAll(selectedRelations);
-            SplitWayCommand result = SplitWayCommand.splitWay(selectedWay, wayChunks, sel);
-            UndoRedoHandler.getInstance().add(result);
+            final Optional<SplitWayCommand> resultOptional = SplitWayCommand.splitWay(selectedWay, wayChunks, sel, SplitWayCommand.Strategy.keepLongestChunk(), SplitWayCommand.WhenRelationOrderUncertain.ASK_USER_FOR_CONSENT_TO_DOWNLOAD);
+            if (resultOptional.isPresent()) {
+                SplitWayCommand result = resultOptional.get();
+                UndoRedoHandler.getInstance().add(result);
 
-            //Select the way to tag
-            Way way2 = result.getNewWays().get(0);
-            try {
-                if (selectedWay.firstNode().equals(way2.firstNode())) {
-                    selectTheWay(selectedWay, way2, selectedWay.lastNode(), way2.lastNode(), selectedWay.firstNode());
-                } else if (selectedWay.firstNode().equals(way2.lastNode())) {
-                    selectTheWay(selectedWay, way2, selectedWay.lastNode(), way2.firstNode(), selectedWay.firstNode());
-                } else if (selectedWay.lastNode().equals(way2.firstNode())) {
-                    selectTheWay(selectedWay, way2, selectedWay.firstNode(), way2.lastNode(), selectedWay.lastNode());
-                } else if (selectedWay.lastNode().equals(way2.lastNode())) {
-                    selectTheWay(selectedWay, way2, selectedWay.firstNode(), way2.firstNode(), selectedWay.lastNode());
+                //Select the way to tag
+                Way way2 = result.getNewWays().get(0);
+                try {
+                    if (selectedWay.firstNode().equals(way2.firstNode())) {
+                        selectTheWay(selectedWay, way2, selectedWay.lastNode(), way2.lastNode(), selectedWay.firstNode());
+                    } else if (selectedWay.firstNode().equals(way2.lastNode())) {
+                        selectTheWay(selectedWay, way2, selectedWay.lastNode(), way2.firstNode(), selectedWay.firstNode());
+                    } else if (selectedWay.lastNode().equals(way2.firstNode())) {
+                        selectTheWay(selectedWay, way2, selectedWay.firstNode(), way2.lastNode(), selectedWay.lastNode());
+                    } else if (selectedWay.lastNode().equals(way2.lastNode())) {
+                        selectTheWay(selectedWay, way2, selectedWay.firstNode(), way2.firstNode(), selectedWay.lastNode());
+                    }
+
+                } catch (Exception e) {
+                    Logging.error(e);
                 }
-
-            } catch (Exception e) {
-                Logging.error(e);
             }
         }
 
