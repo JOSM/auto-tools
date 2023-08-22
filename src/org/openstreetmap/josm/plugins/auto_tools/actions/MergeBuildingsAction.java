@@ -22,6 +22,7 @@ import org.openstreetmap.josm.command.ChangePropertyCommand;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.SequenceCommand;
 import org.openstreetmap.josm.data.UndoRedoHandler;
+import org.openstreetmap.josm.data.coor.ILatLon;
 import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
@@ -50,18 +51,18 @@ public class MergeBuildingsAction extends JosmAction {
         if (MainApplication.getLayerManager().getEditDataSet() != null) {
             Relation rela = null;
 
-            LinkedList<Way> ways = new LinkedList<Way>(MainApplication.getLayerManager().getEditDataSet().getSelectedWays());
+            LinkedList<Way> ways = new LinkedList<>(MainApplication.getLayerManager().getEditDataSet().getSelectedWays());
             if (ways.isEmpty() || ways.size() == 1) {
                 JOptionPane.showMessageDialog(null, "Select at least two ways");
             } else {
                 //Filtrar los Tags, y sacar un promerio de ellos
-                Map<String, String> atrributes = new Hashtable<String, String>();
+                Map<String, String> atrributes = new Hashtable<>();
                 List<Double> areaList = new ArrayList<>();
                 List<String> bvList = new ArrayList<>();
                 LinkedList<OsmPrimitive> sel = new LinkedList<>();
 
-                for (OsmPrimitive osm : ways) {
-                    if (Utils.filteredCollection(osm.getReferrers(), Relation.class).size() > 0) {
+                for (Way osm : ways) {
+                    if (!Utils.filteredCollection(osm.getReferrers(), Relation.class).isEmpty()) {
                         Relation relation = new ArrayList<>(Utils.filteredCollection(osm.getReferrers(), Relation.class)).get(0);
                         Set<String> keys = relation.getKeys().keySet();
                         for (String key : keys) {
@@ -75,7 +76,7 @@ public class MergeBuildingsAction extends JosmAction {
                             }
                         }
 
-                        areaList.add(findArea((Way) osm));
+                        areaList.add(findArea(osm));
                         bvList.add(relation.get("building"));
                         rela = relation;
                         sel.add(relation);
@@ -92,7 +93,7 @@ public class MergeBuildingsAction extends JosmAction {
                                 }
                             }
                         }
-                        areaList.add(findArea((Way) osm));
+                        areaList.add(findArea(osm));
                         bvList.add(osm.get("building"));
                     }
                 }
@@ -111,18 +112,18 @@ public class MergeBuildingsAction extends JosmAction {
                     //ele -> largest number
                     //building:units -> none if different
                     Tag tag;
-                    if ((entry.getKey().equals("start_date") || entry.getKey().equals("building:units")) && entry.getValue().contains(";")) {
+                    if (("start_date".equals(entry.getKey()) || "building:units".equals(entry.getKey())) && entry.getValue().contains(";")) {
                         tag = new Tag(entry.getKey(), null);
-                    } else if ((entry.getKey().equals("height") || entry.getKey().equals("ele")) && entry.getValue().contains(";")) {
+                    } else if (("height".equals(entry.getKey()) || "ele".equals(entry.getKey())) && entry.getValue().contains(";")) {
                         String[] stringArray = entry.getValue().split(";");
-                        Double max = Double.parseDouble(stringArray[0]);
+                        double max = Double.parseDouble(stringArray[0]);
                         for (int index = 1; index < stringArray.length; index++) {
-                            Double h = Double.parseDouble(stringArray[index]);
+                            double h = Double.parseDouble(stringArray[index]);
                             if (h > max) {
                                 max = h;
                             }
                         }
-                        tag = new Tag(entry.getKey(), max.toString());
+                        tag = new Tag(entry.getKey(), Double.toString(max));
                     } else {
                         tag = new Tag(entry.getKey(), entry.getValue());
                     }
@@ -139,12 +140,12 @@ public class MergeBuildingsAction extends JosmAction {
 
     protected Command MergeAllTags(Relation relation, List<OsmPrimitive> selection, TagCollection tc) {
         List<OsmPrimitive> selectiontemporal = new ArrayList<>();
-        Set<Way> selectionways = new HashSet<>(Utils.filteredCollection((List<OsmPrimitive>) selection, Way.class));
-        List<Command> commands = new ArrayList<Command>();
+        Set<Way> selectionways = new HashSet<>(Utils.filteredCollection(selection, Way.class));
+        List<Command> commands = new ArrayList<>();
 
         if (relation != null) {
             for (OsmPrimitive op : selection) {
-                if (op.getType().equals(OsmPrimitiveType.RELATION)) {
+                if (op.getType() == OsmPrimitiveType.RELATION) {
                     selectiontemporal.add(op);
                     selection.clear();
                     //selection.removeAll(selection);
@@ -162,7 +163,7 @@ public class MergeBuildingsAction extends JosmAction {
 
         for (String key : tc.getKeys()) {
             String value = tc.getValues(key).iterator().next();
-            value = value.equals("") ? null : value;
+            value = "".equals(value) ? null : value;
             commands.add(new ChangePropertyCommand(selection, key, value));
         }
 
@@ -180,16 +181,16 @@ public class MergeBuildingsAction extends JosmAction {
         Double firstSegLength = null;
         boolean isCircle = true;
         for (Node n : w.getNodes()) {
-            if (lastN != null && lastN.getCoor() != null && n.getCoor() != null) {
-                final double segLength = lastN.getCoor().greatCircleDistance(n.getCoor());
+            if (lastN != null && lastN.isLatLonKnown() && n.isLatLonKnown()) {
+                final double segLength = lastN.greatCircleDistance(n);
                 if (firstSegLength == null) {
                     firstSegLength = segLength;
                 }
                 if (isCircle && Math.abs(firstSegLength - segLength) > 0.000001) {
                     isCircle = false;
                 }
-                wayArea += (calcX(n.getCoor()) * calcY(lastN.getCoor()))
-                         - (calcY(n.getCoor()) * calcX(lastN.getCoor()));
+                wayArea += (calcX(n) * calcY(lastN))
+                         - (calcY(n) * calcX(lastN));
             }
             lastN = n;
         }
@@ -202,11 +203,21 @@ public class MergeBuildingsAction extends JosmAction {
         return wayArea;
     }
 
+    @Deprecated
     public static double calcX(LatLon p1) {
-        return p1.lat() * Math.PI * 6367000 / 180;
+        return calcX((ILatLon) p1);
     }
 
+    public static double calcX(ILatLon p1) {
+        return p1.lat() * Math.PI * 6_367_000 / 180;
+    }
+
+    @Deprecated
     public static double calcY(LatLon p1) {
-        return p1.lon() * (Math.PI * 6367000 / 180) * Math.cos(p1.lat() * Math.PI / 180);
+        return calcY((ILatLon) p1);
+    }
+
+    public static double calcY(ILatLon p1) {
+        return p1.lon() * (Math.PI * 6_367_000 / 180) * Math.cos(p1.lat() * Math.PI / 180);
     }
 }
