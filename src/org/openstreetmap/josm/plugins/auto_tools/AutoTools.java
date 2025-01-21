@@ -22,7 +22,7 @@ public class AutoTools extends Plugin {
         super(info);
         final JMenu loadTaskMenu = MainApplication.getMenu()
                 .addMenu("Auto Tools", tr("Auto Tools"), KeyEvent.VK_K,
-                MainApplication.getMenu().getDefaultMenuPos(), HelpUtil.ht("/Plugin/task")
+                MainApplication.getMenu().getDefaultMenuPos(), HelpUtil.ht("/Plugin/AutoTools")
         );
         loadTaskMenu.add(new JMenuItem(new MergeBuildingsAction()));
         loadTaskMenu.add(new JSeparator());
