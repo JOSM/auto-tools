@@ -169,7 +169,7 @@ public class MergeBuildingsAction extends JosmAction {
 
         if (!commands.isEmpty()) {
             String title1 = trn("Pasting {0} tag", "Pasting {0} tags", tc.getKeys().size(), tc.getKeys().size());
-            String title2 = trn("to {0} primitive", "to {0} primitives", selection.size(), selection.size());
+            String title2 = trn("to {0} object", "to {0} objects", selection.size(), selection.size());
             return new SequenceCommand(title1 + " " + title2, commands);
         }
         return null;
