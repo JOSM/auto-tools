@@ -6,7 +6,7 @@
         <artifactId>plugin-root</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
-    <artifactId>auto-tools</artifactId>
+    <artifactId>auto_tools</artifactId>
 
     <url>${plugin.link}</url>
     <developers>
